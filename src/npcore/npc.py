@@ -25,4 +25,20 @@ class NPC:
         Decide and return an action based on current state and context.
         """
         return self.brain.decide(self.state, self.context)
+    def set_goal(self, goal: str) -> None:
+        """
+        Define the main objective of the NPC.
+        """
+        self.goal = goal
+
+    def set_priorities(self, priorities: dict[str, float]) -> None:
+        """
+        Define importance weights for different behaviors.
+        """
+        self.priorities = priorities
     
+    def set_position(self, x: int, y: int) -> None:
+        """
+        Set NPC position in the environment.
+        """
+        self.position = (x, y)

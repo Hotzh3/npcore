@@ -39,4 +39,23 @@ class Environment:
         for _ in range(steps):
             history.append(self.step())
         return history
-    
+
+    def get_nearby(self, npc: NPC, radius: int = 1) -> list[NPC]:
+        if npc.position is None:
+            return []
+
+        x1, y1 = npc.position
+        nearby: list[NPC] = []
+
+        for other in self.npcs:
+            if other is npc or other.position is None:
+                continue
+
+            x2, y2 = other.position
+            distance = abs(x1 - x2) + abs(y1 - y2)
+
+            if distance <= radius:
+                nearby.append(other)
+
+        return nearby
+        
