@@ -5,7 +5,6 @@ from typing import List
 
 from npcore.npc import NPC
 
-
 class Environment:
     """
     Simple simulation environment for NPCs.
