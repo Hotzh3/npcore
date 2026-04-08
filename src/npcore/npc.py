@@ -4,15 +4,33 @@ from npcore.brain import Brain
 
 
 class NPC:
-    """
-    Represents a simple NPC with a state and a decision-making brain.
-    """
-
-    def __init__(self, name: str, brain: Brain) -> None:
+    def __init__(self, name, brain):
         self.name = name
         self.brain = brain
-        self.state = "idle"
-        self.context: dict = {}
+
+        # estado actual
+        self.state = None
+        self.context = {}
+
+        # --- NUEVA BASE DEL AGENTE ---
+
+        # memoria (simple por ahora)
+        self.memory = {}
+
+        # objetivos y prioridades
+        self.goal = None
+        self.priorities = {}
+
+        # inventario
+        self.inventory = []
+
+        # posición en el entorno
+        self.position = None  # (x, y)
+
+        # estructura social
+        self.group = None
+        self.rank = None
+        self.reputation = {}
 
     def set_state(self, state: str) -> None:
         self.state = state
@@ -24,5 +42,4 @@ class NPC:
         """
         Decide and return an action based on current state and context.
         """
-        return self.brain.decide(self.state, self.context)
-    
+        return self.brain.decide(self.state, self.context, self)
