@@ -3,3 +3,5 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 .DS_Store
+src/npcore.egg-info/
+src/npcore.egg-info/
