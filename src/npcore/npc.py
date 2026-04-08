@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from npcore.brain import Brain
 
+
 class NPC:
     def __init__(self, name, brain):
         self.name = name
@@ -41,5 +42,4 @@ class NPC:
         """
         Decide and return an action based on current state and context.
         """
-        return self.brain.decide(self.state, self.context)
-    
+        return self.brain.decide(self.state, self.context, self)
