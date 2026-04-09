@@ -4,6 +4,7 @@ from typing import Callable, Dict
 
 from npcore.probability import weighted_choice
 
+from npcore.utility import normalize_utilities
 
 class Brain:
     """
@@ -25,20 +26,10 @@ class Brain:
         Register a rule for a given state.
         """
         self.rules[state] = func
-
-    def decide(self, state: str, context: dict, npc=None) -> str:
+        
+    def _resolve_probabilities(self, state: str, context: dict, npc=None) -> dict[str, float]:
         """
-        Decide an action based on state and context.
-
-        Parameters
-        ----------
-        state:
-            Current state of the NPC.
-        context:
-            Context dictionary used by the rule.
-        npc:
-            Optional NPC instance. If provided, rules may use it to access
-            memory, goals, inventory, group information, etc.
+        Resolve the raw probabilities returned by a rule.
         """
         if state not in self.rules:
             raise ValueError(f"No rule defined for state '{state}'")
@@ -46,12 +37,87 @@ class Brain:
         rule = self.rules[state]
 
         if npc is None:
-            probabilities = rule(context)
-        else:
-            try:
-                probabilities = rule(npc, context)
-            except TypeError:
-                probabilities = rule(context)
+            return rule(context)
+
+        try:
+            return rule(npc, context)
+        except TypeError:
+            return rule(context)
+        
+    def _apply_priority_weights(self, probabilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Apply NPC priorities as multiplicative weights.
+        """
+        if npc is None or not npc.priorities:
+            return dict(probabilities)
+
+        adjusted = dict(probabilities)
+
+        for action, value in adjusted.items():
+            weight = npc.priorities.get(action, 1.0)
+            adjusted[action] = value * weight
+
+        return adjusted
+    
+    def _apply_emotions(self, probabilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust action weights using NPC emotions.
+        """
+        if npc is None:
+            return dict(probabilities)
+
+        adjusted = dict(probabilities)
+
+        fear = npc.get_emotion("fear")
+        aggression = npc.get_emotion("aggression")
+
+        for action, value in adjusted.items():
+            if action in {"run", "hide"}:
+                adjusted[action] = value * (1 + fear)
+
+            if action in {"attack", "defend"}:
+                adjusted[action] = adjusted[action] * (1 + aggression)
+
+        return adjusted
+    
+    def _apply_goal(self, probabilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust action weights according to the NPC goal.
+        """
+        if npc is None or not npc.goal:
+            return dict(probabilities)
+
+        adjusted = dict(probabilities)
+        goal = npc.goal
+
+        for action, value in adjusted.items():
+            if goal == "survive" and action in {"run", "hide"}:
+                adjusted[action] = value * 2
+
+            if goal == "attack" and action == "attack":
+                adjusted[action] = value * 2
+
+        return adjusted
+    
+    def _normalize(self, probabilities: dict[str, float]) -> dict[str, float]:
+        """
+        Normalize weights so they sum to 1.
+        """
+        total = sum(probabilities.values())
+
+        if total <= 0:
+            return dict(probabilities)
+
+        return {action: value / total for action, value in probabilities.items()}
+
+    def decide(self, state: str, context: dict, npc=None) -> str:
+        """
+        Decide an action based on state, context and optional NPC traits.
+        """
+        probabilities = self._resolve_probabilities(state, context, npc)
+        probabilities = self._apply_priority_weights(probabilities, npc)
+        probabilities = self._apply_emotions(probabilities, npc)
+        probabilities = self._apply_goal(probabilities, npc)
+        probabilities = self._normalize(probabilities)
 
         return weighted_choice(probabilities)
-    
