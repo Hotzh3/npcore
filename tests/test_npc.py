@@ -114,3 +114,18 @@ def test_npc_decision_with_social_influence():
     action = npc.act()
 
     assert action == "follow"
+
+def test_utility_weights_favor_higher_score():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 3.0, "walk": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+
+    results = [npc.act() for _ in range(30)]
+
+    assert results.count("run") > results.count("walk")
