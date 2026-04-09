@@ -1,9 +1,9 @@
-
 from __future__ import annotations
 
 from typing import List
 
 from npcore.npc import NPC
+
 
 class Environment:
     """
@@ -13,24 +13,27 @@ class Environment:
     def __init__(self) -> None:
         self.npcs: List[NPC] = []
         self.tick_count = 0
-        self.global_state = {}
-        self.events = []
+        self.events: list[str] = []
+        self.global_state: dict = {}
 
     def add_npc(self, npc: NPC) -> None:
         self.npcs.append(npc)
 
     def trigger_event(self, event: str) -> None:
+        """
+        Register an environment event.
+        """
         self.events.append(event)
 
     def get_nearby(self, npc: NPC, radius: int = 1) -> list[NPC]:
         """
-        Return nearby NPCs based on Manhattan distance.
+        Return nearby NPCs using Manhattan distance.
         """
         if npc.position is None:
             return []
 
         x1, y1 = npc.position
-        nearby = []
+        nearby: list[NPC] = []
 
         for other in self.npcs:
             if other is npc or other.position is None:
@@ -52,8 +55,14 @@ class Environment:
         results = []
 
         for npc in self.npcs:
+            npc.update_context(events=self.events)
             action = npc.act()
             results.append((npc.name, action))
+
+            nearby = self.get_nearby(npc)
+            for other in nearby:
+                message = npc.greet(other)
+                results.append(("message", message))
 
         self.tick_count += 1
         return results
