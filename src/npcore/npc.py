@@ -41,6 +41,9 @@ class NPC:
             "trust": 0.0,
             "aggression": 0.0,
         }
+        
+        # aprendizaje simple
+        self.action_history: dict[str, list[bool]] = {}
 
     def set_state(self, state: str) -> None:
         self.state = state
@@ -104,3 +107,31 @@ class NPC:
         Decide and return an action based on current state and context.
         """
         return self.brain.decide(self.state, self.context, self)
+    
+    def record_outcome(self, action: str, success: bool) -> None:
+        """
+        Store the outcome of an action.
+        """
+        if action not in self.action_history:
+            self.action_history[action] = []
+
+        self.action_history[action].append(success)
+
+
+    def get_action_history(self, action: str) -> list[bool]:
+        """
+        Return stored outcomes for an action.
+        """
+        return self.action_history.get(action, [])
+
+
+    def get_action_success_rate(self, action: str) -> float:
+        """
+        Return success rate for an action.
+        """
+        history = self.get_action_history(action)
+
+        if not history:
+            return 0.0
+
+        return sum(history) / len(history)

@@ -129,3 +129,23 @@ def test_utility_weights_favor_higher_score():
     results = [npc.act() for _ in range(30)]
 
     assert results.count("run") > results.count("walk")
+    
+def test_npc_can_record_action_outcome():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", False)
+
+    assert npc.get_action_history("run") == [True, False]
+
+
+def test_npc_action_success_rate():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", False)
+
+    assert npc.get_action_success_rate("run") == 2 / 3
