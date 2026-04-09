@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable, Dict
 
 from npcore.probability import weighted_choice
+from npcore.utility import normalize_utilities
 
 
 class Brain:
@@ -10,9 +11,9 @@ class Brain:
     Decision engine for NPCs.
 
     Each state is associated with a rule function that returns
-    a dictionary of actions and their weights/probabilities.
+    action scores/utilities.
 
-    During this refactor stage, rules can work in two ways:
+    Rules can work in two ways:
     1. Legacy style: rule(context)
     2. Extended style: rule(npc, context)
     """
@@ -26,19 +27,9 @@ class Brain:
         """
         self.rules[state] = func
 
-    def decide(self, state: str, context: dict, npc=None) -> str:
+    def _resolve_utilities(self, state: str, context: dict, npc=None) -> dict[str, float]:
         """
-        Decide an action based on state and context.
-
-        Parameters
-        ----------
-        state:
-            Current state of the NPC.
-        context:
-            Context dictionary used by the rule.
-        npc:
-            Optional NPC instance. If provided, rules may use it to access
-            memory, goals, inventory, group information, etc.
+        Resolve raw action utilities returned by a rule.
         """
         if state not in self.rules:
             raise ValueError(f"No rule defined for state '{state}'")
@@ -46,12 +37,77 @@ class Brain:
         rule = self.rules[state]
 
         if npc is None:
-            probabilities = rule(context)
-        else:
-            try:
-                probabilities = rule(npc, context)
-            except TypeError:
-                probabilities = rule(context)
+            return rule(context)
+
+        try:
+            return rule(npc, context)
+        except TypeError:
+            return rule(context)
+
+    def _apply_priority_weights(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Apply NPC priorities as multiplicative weights.
+        """
+        if npc is None or not npc.priorities:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+
+        for action, value in adjusted.items():
+            weight = npc.priorities.get(action, 1.0)
+            adjusted[action] = value * weight
+
+        return adjusted
+
+    def _apply_emotions(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust action utilities using NPC emotions.
+        """
+        if npc is None:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+
+        fear = npc.get_emotion("fear")
+        aggression = npc.get_emotion("aggression")
+
+        for action, value in adjusted.items():
+            if action in {"run", "hide"}:
+                adjusted[action] = value * (1 + fear)
+
+            if action in {"attack", "defend"}:
+                adjusted[action] = value * (1 + aggression)
+
+        return adjusted
+
+    def _apply_goal(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust action utilities according to the NPC goal.
+        """
+        if npc is None or not npc.goal:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+        goal = npc.goal
+
+        for action, value in adjusted.items():
+            if goal == "survive" and action in {"run", "hide"}:
+                adjusted[action] = value * 2
+
+            if goal == "attack" and action == "attack":
+                adjusted[action] = value * 2
+
+        return adjusted
+
+    def decide(self, state: str, context: dict, npc=None) -> str:
+        """
+        Decide an action based on state, context and optional NPC traits.
+        """
+        utilities = self._resolve_utilities(state, context, npc)
+        utilities = self._apply_priority_weights(utilities, npc)
+        utilities = self._apply_emotions(utilities, npc)
+        utilities = self._apply_goal(utilities, npc)
+
+        probabilities = normalize_utilities(utilities)
 
         return weighted_choice(probabilities)
-    
