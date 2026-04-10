@@ -2,6 +2,15 @@
 
 NPCore es una librería en Python para la simulación de agentes (NPCs) con toma de decisiones basada en reglas, contexto, emociones, objetivos y estructuras sociales. El proyecto está diseñado como una base modular y extensible para sistemas de inteligencia artificial en simulaciones o videojuegos.
 
+
+![Python](https://img.shields.io/badge/python-3.10+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![PyPI](https://img.shields.io/pypi/v/npcore)
+
+
+## Tutorial en Google Colab
+
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Hotzh3/npcore/blob/main/notebooks/tutorial_npcore.ipynb)
 ---
 
 ## Descripción
@@ -16,8 +25,8 @@ El sistema sigue una arquitectura clara y escalable que permite evolucionar haci
 
 - Motor de decisiones modular (`Brain`)
 - Soporte para reglas en dos formatos:
-  - rule(context)
-  - rule(npc, context)
+  - `rule(context)`
+  - `rule(npc, context)`
 - NPCs con:
   - estado y contexto dinámico
   - memoria (recordar, recuperar y olvidar información)
@@ -32,11 +41,11 @@ El sistema sigue una arquitectura clara y escalable que permite evolucionar haci
   - interacción entre NPCs
 - Influencia social entre agentes
 - Integración de emociones y objetivos en la toma de decisiones
+- Sistema de aprendizaje básico basado en resultados previos
 - Normalización de probabilidades en decisiones
 - Tests automatizados con pytest
 
 ---
-
 ## Arquitectura
 
 El flujo principal del sistema es el siguiente:
@@ -54,16 +63,23 @@ Esto permite una toma de decisiones flexible y extensible.
 ---
 
 ## Instalación
+Dentro del `Brain`, las decisiones son modificadas por:
 
-Clonar el repositorio:
+- prioridades del NPC
+- emociones
+- objetivos
+- aprendizaje (experiencias pasadas)
+
+Esto permite una toma de decisiones flexible, dinámica y extensible.
+
+---
+
+## Instalación
 
 ```bash
 git clone https://github.com/Hotzh3/npcore.git
 cd npcore
-
-## Instalación
-
-  pip install -e .
+pip install -e .
 
 ## Uso básico
   from npcore.brain import Brain
@@ -110,13 +126,24 @@ cd npcore
       brain.py
       npc.py
       environment.py
-
       probability.py
+      utility.py
 
   tests/
       test_npc.py
       test_environment.py
       test_probability.py
+
+  examples/
+      demo_simple.py
+      demo_interaction.py
+      demo_simulation.py
+
+  assets/
+      demo_simple.png
+      demo_interaction.png
+      demo_simulation.png
+      tests.png
 
 ## Ejecución
 
