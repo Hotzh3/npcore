@@ -128,3 +128,6 @@ cd npcore
 
 ### Tests
 ![Tests](assets/tests.png)
+
+### Demo simulación completa
+![Demo simulación](assets/demo_simulation.png)
