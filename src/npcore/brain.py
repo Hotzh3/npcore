@@ -81,9 +81,6 @@ class Brain:
         return adjusted
 
     def _apply_goal(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
-        """
-        Adjust action utilities according to the NPC goal.
-        """
         if npc is None or not npc.goal:
             return dict(utilities)
 
@@ -99,6 +96,26 @@ class Brain:
 
         return adjusted
 
+
+    def _apply_learning(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust action utilities according to past success rates.
+        """
+        if npc is None:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+
+        for action, value in adjusted.items():
+            success_rate = npc.get_action_success_rate(action)
+
+            if success_rate > 0:
+                adjusted[action] = value * (1 + success_rate)
+
+        return adjusted
+
+   
+
     def decide(self, state: str, context: dict, npc=None) -> str:
         """
         Decide an action based on state, context and optional NPC traits.
@@ -107,6 +124,7 @@ class Brain:
         utilities = self._apply_priority_weights(utilities, npc)
         utilities = self._apply_emotions(utilities, npc)
         utilities = self._apply_goal(utilities, npc)
+        utilities = self._apply_learning(utilities, npc)
 
         probabilities = normalize_utilities(utilities)
 

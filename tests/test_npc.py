@@ -149,3 +149,40 @@ def test_npc_action_success_rate():
     npc.record_outcome("run", False)
 
     assert npc.get_action_success_rate("run") == 2 / 3
+    
+def test_learning_increases_previously_successful_action():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 1.0, "walk": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+
+    results = [npc.act() for _ in range(30)]
+
+    assert results.count("run") > results.count("walk")
+    
+def test_learning_does_not_boost_action_without_history():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 1.0, "walk": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+
+    npc.record_outcome("run", True)
+
+    history_run = npc.get_action_success_rate("run")
+    history_walk = npc.get_action_success_rate("walk")
+
+    assert history_run > history_walk
