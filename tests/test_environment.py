@@ -634,3 +634,28 @@ def test_npc_prefers_following_leader_when_grouped_and_afraid():
 
     assert result == "follow"
     assert guard.destination == (2, 0)
+    
+def test_group_can_share_safe_destination():
+    brain = Brain()
+
+    def leader_rule(npc, context):
+        nearby = context.get("nearby", [])
+        npc.share_destination_with_allies(nearby)
+        return {"signal": 1.0}
+
+    brain.add_rule("group", leader_rule)
+
+    leader = NPC("Captain", brain)
+    leader.set_state("group")
+    leader.set_group("guards")
+    leader.set_destination(4, 4)
+
+    ally = NPC("Guard", brain)
+    ally.set_group("guards")
+
+    leader.update_context(nearby=[ally])
+
+    result = leader.act()
+
+    assert result == "signal"
+    assert ally.destination == (4, 4)

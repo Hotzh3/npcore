@@ -777,3 +777,42 @@ def test_npc_follow_group_leader_returns_none_without_leader():
 
     assert destination is None
     assert guard.destination is None    
+def test_npc_can_share_destination_with_allies():
+    brain = make_brain()
+
+    leader = NPC("Captain", brain)
+    ally1 = NPC("Guard", brain)
+    ally2 = NPC("Scout", brain)
+
+    leader.set_group("guards")
+    ally1.set_group("guards")
+    ally2.set_group("guards")
+
+    leader.set_destination(4, 4)
+
+    updated = leader.share_destination_with_allies([ally1, ally2])
+
+    assert updated == 2
+    assert ally1.destination == (4, 4)
+    assert ally2.destination == (4, 4)
+    
+def test_npc_does_not_share_destination_without_group():
+    brain = make_brain()
+
+    npc = NPC("Wanderer", brain)
+    other = NPC("Guard", brain)
+
+    npc.set_destination(4, 4)
+
+    updated = npc.share_destination_with_allies([other])
+
+    assert updated == 0
+    assert other.destination is None
+    
+def test_npc_can_receive_shared_destination():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.receive_shared_destination((3, 2))
+
+    assert npc.destination == (3, 2)

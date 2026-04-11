@@ -301,6 +301,34 @@ class NPC:
 
         self.destination = nearest_leader.position
         return self.destination
+        
+    def share_destination_with_allies(self, others: list["NPC"]) -> int:
+        """
+        Share current destination with allies in the same group.
+        Returns the number of allies updated.
+        """
+        if self.group is None or self.destination is None:
+            return 0
+
+        updated = 0
+
+        for other in others:
+            if other is self:
+                continue
+            if other.group != self.group:
+                continue
+
+            other.destination = self.destination
+            updated += 1
+
+        return updated
+    
+    def receive_shared_destination(self, destination: tuple[int, int] | None) -> None:
+        """
+        Accept a destination received from an ally.
+        """
+        if destination is not None:
+            self.destination = destination
     
     def greet(self, other: "NPC") -> str:
         return f"{self.name} says hello to {other.name}"
