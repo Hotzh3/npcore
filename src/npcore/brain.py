@@ -107,10 +107,8 @@ class Brain:
         adjusted = dict(utilities)
 
         for action, value in adjusted.items():
-            success_rate = npc.get_action_success_rate(action)
-
-            if success_rate > 0:
-                adjusted[action] = value * (1 + success_rate)
+            learning_weight = npc.get_learning_weight(action)
+            adjusted[action] = value * learning_weight
 
         return adjusted
 

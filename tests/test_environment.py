@@ -1,3 +1,4 @@
+from npcore import npc
 from npcore.brain import Brain
 from npcore.npc import NPC
 from npcore.environment import Environment
@@ -339,3 +340,133 @@ def test_module_on_event_hook_runs():
 
     assert len(module.events_seen) == 1
     assert module.events_seen[0]["type"] == "danger"
+    
+def test_environment_stores_world_dimensions():
+    env = Environment(width=8, height=6)
+
+    assert env.width == 8
+    assert env.height == 6
+    
+def test_environment_can_register_zones():
+    env = Environment(width=5, height=5)
+
+    env.add_zone("safe_house", [(4, 4), (4, 3)])
+
+    assert env.zones["safe_house"] == [(4, 4), (4, 3)]
+    
+def test_environment_can_find_zone_at_position():
+    env = Environment(width=5, height=5)
+
+    env.add_zone("market", [(1, 1), (1, 2)])
+
+    assert env.get_zone_at(1, 1) == "market"
+    assert env.get_zone_at(0, 0) is None
+    
+def test_environment_checks_bounds():
+    env = Environment(width=3, height=3)
+
+    assert env.is_within_bounds(0, 0) is True
+    assert env.is_within_bounds(2, 2) is True
+    assert env.is_within_bounds(3, 0) is False
+    assert env.is_within_bounds(-1, 1) is False
+    
+def test_environment_can_return_zone_cells():
+    env = Environment(width=5, height=5)
+    env.add_zone("safe_house", [(4, 4), (4, 3)])
+
+    cells = env.get_zone_cells("safe_house")
+
+    assert cells == [(4, 4), (4, 3)]
+    
+def test_npc_can_choose_safe_zone_when_danger_exists():
+    brain = Brain()
+
+    def danger_rule(npc, context):
+        events = context.get("events", [])
+        env = context.get("environment")
+
+        if any(event["type"] == "danger" for event in events):
+            target = npc.flee_to_zone(env, "safe_house")
+            if target is not None:
+                return {"run": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("react", danger_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("react")
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+    env.add_zone("safe_house", [(4, 4), (2, 1)])
+    env.add_npc(npc)
+
+    env.trigger_event("danger")
+    npc.update_context(environment=env, events=list(env.events))
+
+    result = npc.act()
+
+    assert result == "run"
+    assert npc.destination == (2, 1)
+    
+def test_npc_waits_if_danger_exists_but_no_safe_zone():
+    brain = Brain()
+
+    def danger_rule(npc, context):
+        events = context.get("events", [])
+        env = context.get("environment")
+
+        if any(event["type"] == "danger" for event in events):
+            target = npc.flee_to_zone(env, "safe_house")
+            if target is not None:
+                return {"run": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("react", danger_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("react")
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+    env.add_npc(npc)
+
+    env.trigger_event("danger")
+    npc.update_context(environment=env, events=list(env.events))
+
+    result = npc.act()
+
+    assert result == "wait"
+    assert npc.destination is None
+    
+def test_npc_can_choose_market_when_trade_goal_exists():
+    brain = Brain()
+
+    def trade_rule(npc, context):
+        env = context.get("environment")
+        target = npc.pursue_goal_in_environment(env)
+
+        if target is not None:
+            return {"move": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("trade", trade_rule)
+
+    npc = NPC("Trader", brain)
+    npc.set_state("trade")
+    npc.set_goal("trade")
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+    env.add_zone("market", [(4, 4), (2, 1)])
+    env.add_npc(npc)
+
+    npc.update_context(environment=env)
+
+    result = npc.act()
+
+    assert result == "move"
+    assert npc.destination == (2, 1)

@@ -30,6 +30,8 @@ class NPC:
 
         # posición en el entorno
         self.position: tuple[int, int] | None = None
+        
+        self.destination: tuple[int, int] | None = None
 
         # estructura social
         self.group: str | None = None
@@ -119,6 +121,51 @@ class NPC:
 
     def set_position(self, x: int, y: int) -> None:
         self.position = (x, y)
+        
+        
+    def set_destination(self, x: int, y: int) -> None:
+        """
+        Set a spatial destination for the NPC.
+        """
+        self.destination = (x, y)
+
+    def clear_destination(self) -> None:
+        """
+        Clear the current destination.
+        """
+        self.destination = None
+
+    def move_toward_destination(self) -> tuple[int, int] | None:
+        """
+        Move one step toward the current destination.
+        """
+        if self.position is None or self.destination is None:
+            return self.position
+
+        x, y = self.position
+        dx, dy = self.destination
+
+        if x < dx:
+            x += 1
+        elif x > dx:
+            x -= 1
+        elif y < dy:
+            y += 1
+        elif y > dy:
+            y -= 1
+
+        self.position = (x, y)
+        return self.position
+    
+    def distance_to(self, x: int, y: int) -> int | None:
+        """
+        Return Manhattan distance from current position to a target cell.
+        """
+        if self.position is None:
+            return None
+
+        px, py = self.position
+        return abs(px - x) + abs(py - y)
 
     def set_group(self, group: str) -> None:
         self.group = group
@@ -231,3 +278,61 @@ class NPC:
             return 1.0
 
         return 1.0 + success_rate
+    
+    def choose_nearest_cell(self, cells: list[tuple[int, int]]) -> tuple[int, int] | None:
+        """
+        Choose the nearest cell from a list of positions.
+        """
+        if self.position is None or not cells:
+            return None
+
+        nearest = min(
+            cells,
+            key=lambda cell: abs(self.position[0] - cell[0]) + abs(self.position[1] - cell[1]),
+        )
+        return nearest
+    
+    def flee_to_zone(self, env, zone_name: str) -> tuple[int, int] | None:
+        """
+        Select the nearest cell in a zone and set it as destination.
+        """
+        zone_cells = env.get_zone_cells(zone_name)
+        target = self.choose_nearest_cell(zone_cells)
+
+        if target is None:
+            return None
+
+        self.destination = target
+        return target
+    
+    def go_to_zone(self, env, zone_name: str) -> tuple[int, int] | None:
+        """
+        Select the nearest cell in a zone and set it as destination.
+        """
+        zone_cells = env.get_zone_cells(zone_name)
+        target = self.choose_nearest_cell(zone_cells)
+
+        if target is None:
+            return None
+
+        self.destination = target
+        return target
+    
+    def pursue_goal_in_environment(self, env) -> tuple[int, int] | None:
+        """
+        Choose a destination zone based on the current goal.
+        """
+        if self.goal is None:
+            return None
+
+        goal_to_zone = {
+            "trade": "market",
+            "survive": "safe_house",
+            "rest": "home",
+        }
+
+        zone_name = goal_to_zone.get(self.goal)
+        if zone_name is None:
+            return None
+
+        return self.go_to_zone(env, zone_name)

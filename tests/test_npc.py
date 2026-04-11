@@ -1,5 +1,7 @@
+from npcore import npc
 from npcore.brain import Brain
 from npcore.npc import NPC
+from npcore.environment import Environment
 
 
 def make_brain(action_map: dict[str, float] | None = None) -> Brain:
@@ -126,7 +128,7 @@ def test_utility_weights_favor_higher_score():
     npc = NPC("Guard", brain)
     npc.set_state("idle")
 
-    results = [npc.act() for _ in range(30)]
+    results = [npc.act() for _ in range(200)]
 
     assert results.count("run") > results.count("walk")
     
@@ -165,7 +167,7 @@ def test_learning_increases_previously_successful_action():
     npc.record_outcome("run", True)
     npc.record_outcome("run", True)
 
-    results = [npc.act() for _ in range(30)]
+    results = [npc.act() for _ in range(100)]
 
     assert results.count("run") > results.count("walk")
     
@@ -269,7 +271,7 @@ def test_aggressive_personality_favors_attack():
     npc.set_state("idle")
     npc.set_personality_trait("aggression", 1.0)
 
-    results = [npc.act() for _ in range(30)]
+    results = [npc.act() for _ in range(100)]
 
     assert results.count("attack") > results.count("wait")
     
@@ -285,7 +287,7 @@ def test_fearful_personality_favors_run():
     npc.set_state("idle")
     npc.set_personality_trait("fearfulness", 1.0)
 
-    results = [npc.act() for _ in range(30)]
+    results = [npc.act() for _ in range(100)]
 
     assert results.count("run") > results.count("wait")
     
@@ -378,3 +380,186 @@ def test_learning_favors_action_with_better_history():
 
     assert results.count("run") > results.count("walk")
     
+def test_npc_can_set_destination():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_destination(4, 4)
+
+    assert npc.destination == (4, 4)
+    
+def test_npc_can_clear_destination():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_destination(4, 4)
+    npc.clear_destination()
+
+    assert npc.destination is None
+    
+def test_npc_moves_toward_destination_on_x_axis():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(0, 0)
+    npc.set_destination(2, 0)
+
+    new_position = npc.move_toward_destination()
+
+    assert new_position == (1, 0)
+    
+def test_npc_moves_toward_destination_on_y_axis():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(2, 0)
+    npc.set_destination(2, 2)
+
+    new_position = npc.move_toward_destination()
+
+    assert new_position == (2, 1)
+    
+def test_npc_does_not_move_without_position():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_destination(2, 2)
+
+    assert npc.move_toward_destination() is None
+    
+def test_npc_can_measure_distance_to_cell():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(1, 1)
+
+    assert npc.distance_to(3, 2) == 3
+    
+def test_npc_can_choose_nearest_cell():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(1, 1)
+
+    nearest = npc.choose_nearest_cell([(4, 4), (2, 1), (0, 0)])
+
+    assert nearest == (2, 1)
+    
+def test_npc_returns_none_for_nearest_cell_without_position():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    nearest = npc.choose_nearest_cell([(4, 4), (2, 1)])
+
+    assert nearest is None
+    
+def test_npc_can_flee_to_zone():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+    env.add_zone("safe_house", [(4, 4), (2, 1), (3, 3)])
+
+    target = npc.flee_to_zone(env, "safe_house")
+
+    assert target == (2, 1)
+    assert npc.destination == (2, 1)
+    
+def test_npc_flee_to_zone_returns_none_when_zone_missing():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+
+    target = npc.flee_to_zone(env, "safe_house")
+
+    assert target is None
+    assert npc.destination is None
+    
+def test_npc_can_go_to_zone():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+    env.add_zone("market", [(4, 4), (2, 1), (3, 3)])
+
+    target = npc.go_to_zone(env, "market")
+
+    assert target == (2, 1)
+    assert npc.destination == (2, 1)
+    
+def test_npc_go_to_zone_returns_none_when_zone_missing():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+
+    target = npc.go_to_zone(env, "market")
+
+    assert target is None
+    assert npc.destination is None
+
+def test_npc_can_pursue_trade_goal_in_environment():
+    brain = make_brain()
+    npc = NPC("Trader", brain)
+    npc.set_position(1, 1)
+    npc.set_goal("trade")
+
+    env = Environment(width=5, height=5)
+    env.add_zone("market", [(4, 4), (2, 1)])
+
+    target = npc.pursue_goal_in_environment(env)
+
+    assert target == (2, 1)
+    assert npc.destination == (2, 1)
+    
+def test_npc_can_pursue_survive_goal_in_environment():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+    npc.set_goal("survive")
+
+    env = Environment(width=5, height=5)
+    env.add_zone("safe_house", [(4, 4), (3, 1)])
+
+    target = npc.pursue_goal_in_environment(env)
+
+    assert target == (3, 1)
+    assert npc.destination == (3, 1)
+    
+def test_npc_pursue_goal_returns_none_when_goal_has_no_zone():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+    npc.set_goal("attack")
+
+    env = Environment(width=5, height=5)
+    env.add_zone("market", [(2, 2)])
+
+    target = npc.pursue_goal_in_environment(env)
+
+    assert target is None
+    assert npc.destination is None      
+
+
+def test_learning_increases_run_utility_directly():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 1.0, "walk": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+
+    utilities = {"run": 1.0, "walk": 1.0}
+    adjusted = brain._apply_learning(utilities, npc)
+
+    assert adjusted["run"] > adjusted["walk"]

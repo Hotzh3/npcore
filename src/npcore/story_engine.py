@@ -38,4 +38,4 @@ class StoryEngine:
             "ignore": f"{actor} ignored someone during the simulation.",
         }
 
-        return action_map.get(action, f"{actor} performed action '{action}'.")
+        return action_map.get(action, f"{actor} performed action '{action}'.")  

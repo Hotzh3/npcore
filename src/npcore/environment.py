@@ -10,13 +10,16 @@ class Environment:
     Simple simulation environment for NPCs.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, width: int = 10, height: int = 10) -> None:
         self.npcs: List[NPC] = []
         self.tick_count = 0
         self.global_state: dict = {}
         self.events: list[str] = []
         self.history: list[list[tuple[str, str]]] = []
         self.modules: list = []
+        self.width = width
+        self.height = height
+        self.zones: dict[str, list[tuple[int, int]]] = {}
 
     def add_npc(self, npc: NPC) -> None:
         self.npcs.append(npc)
@@ -26,6 +29,34 @@ class Environment:
         Register an environment module.
         """
         self.modules.append(module)
+
+    def add_zone(self, name: str, cells: list[tuple[int, int]]) -> None:
+        """
+        Register a named zone in the environment.
+        """
+        self.zones[name] = cells
+        
+    def get_zone_cells(self, name: str) -> list[tuple[int, int]]:
+        """
+        Return all cells belonging to a named zone.
+        """
+        return self.zones.get(name, [])
+
+    def get_zone_at(self, x: int, y: int) -> str | None:
+        """
+        Return the name of the zone occupying a cell, if any.
+        """
+        for zone_name, cells in self.zones.items():
+            if (x, y) in cells:
+                return zone_name
+        return None
+
+    def is_within_bounds(self, x: int, y: int) -> bool:
+        """
+        Check whether a position is inside the world bounds.
+        """
+        return 0 <= x < self.width and 0 <= y < self.height
+
 
     def trigger_event(self, event) -> None:
         """
