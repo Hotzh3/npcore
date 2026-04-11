@@ -38,6 +38,20 @@ class Environment:
         """
         self.zones[name] = cells
         
+    def apply_zone_cost(self, zone_name: str, cost: int) -> None:
+        """
+        Apply the same movement cost to every cell in a zone.
+        """
+        for cell in self.get_zone_cells(zone_name):
+            self.cell_costs[cell] = cost
+            
+    def clear_zone_cost(self, zone_name: str) -> None:
+        """
+        Remove explicit movement costs from every cell in a zone.
+        """
+        for cell in self.get_zone_cells(zone_name):
+            self.cell_costs.pop(cell, None)
+        
     def get_zone_cells(self, name: str) -> list[tuple[int, int]]:
         """
         Return all cells belonging to a named zone.

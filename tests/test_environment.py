@@ -545,3 +545,22 @@ def test_environment_cell_cost_defaults_to_one():
     env = Environment(width=5, height=5)
 
     assert env.get_cell_cost(0, 0) == 1
+    
+def test_environment_can_apply_zone_cost():
+    env = Environment(width=5, height=5)
+    env.add_zone("danger_zone", [(1, 1), (1, 2)])
+
+    env.apply_zone_cost("danger_zone", 7)
+
+    assert env.get_cell_cost(1, 1) == 7
+    assert env.get_cell_cost(1, 2) == 7
+    
+def test_environment_can_clear_zone_cost():
+    env = Environment(width=5, height=5)
+    env.add_zone("danger_zone", [(1, 1), (1, 2)])
+
+    env.apply_zone_cost("danger_zone", 7)
+    env.clear_zone_cost("danger_zone")
+
+    assert env.get_cell_cost(1, 1) == 1
+    assert env.get_cell_cost(1, 2) == 1

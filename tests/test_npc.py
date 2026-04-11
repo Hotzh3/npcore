@@ -659,3 +659,20 @@ def test_npc_move_smart_avoids_high_cost_cell():
 
     assert new_pos == (0, 1)
     
+    
+def test_npc_move_smart_avoids_danger_zone_cost():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(0, 0)
+    npc.set_destination(2, 0)
+
+    env = Environment(width=3, height=2)
+    env.add_zone("danger_zone", [(1, 0)])
+    env.apply_zone_cost("danger_zone", 10)
+
+    new_pos = npc.move_smart(env)
+
+    assert new_pos == (0, 1)
