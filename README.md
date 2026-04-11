@@ -1,160 +1,180 @@
 # NPCore
 
-NPCore es una librería en Python para la simulación de agentes (NPCs) con toma de decisiones basada en reglas, contexto, emociones, objetivos y estructuras sociales. El proyecto está diseñado como una base modular y extensible para sistemas de inteligencia artificial en simulaciones o videojuegos.
+> Framework de simulación de NPCs con inteligencia emergente, comportamiento social y toma de decisiones adaptativa.
 
+**npcore** es una librería en Python para simular NPCs (Non-Player Characters) inteligentes en entornos dinámicos.  
+Permite modelar comportamiento autónomo mediante reglas, memoria, emociones, aprendizaje, interacción social y navegación espacial.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![PyPI](https://img.shields.io/pypi/v/npcore)
+![Tests](https://img.shields.io/badge/tests-100%25%20passing-brightgreen)
 
+---
+
+## Demo de simulación
+
+Ejemplo de simulación completa:
+
+![Demo](docs/demo.gif)
+
+---
 
 ## Tutorial en Google Colab
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Hotzh3/npcore/blob/main/notebooks/tutorial_npcore.ipynb)
+
 ---
 
 ## Descripción
 
-NPCore implementa un sistema de agentes donde cada NPC toma decisiones en función de su estado, su contexto y múltiples factores internos como prioridades, emociones y objetivos. Además, los NPCs interactúan entre sí dentro de un entorno que soporta eventos y proximidad.
+npcore implementa un sistema de agentes donde cada NPC toma decisiones en función de su estado, su contexto y múltiples factores internos como prioridades, emociones, memoria y objetivos.
 
-El sistema sigue una arquitectura clara y escalable que permite evolucionar hacia modelos más avanzados como Utility AI, aprendizaje dinámico o simulaciones complejas multi-agente.
+Además, los NPCs interactúan entre sí dentro de un entorno dinámico que soporta:
+
+- eventos globales
+- proximidad entre agentes
+- estructuras sociales
+- comportamiento grupal
+
+El sistema sigue una arquitectura modular y extensible que permite evolucionar hacia modelos más avanzados como:
+
+- Utility AI
+- aprendizaje adaptativo
+- simulaciones multi-agente complejas
+
+---
+
+## Instalación
+
+Instala la librería directamente con pip:
+
+ bash
+ pip install npcore
+
+---
+
+## En google colab
+!pip install npcore
+
+
+--
+
+
+## Uso básico
+from npcore.brain import Brain
+from npcore.npc import NPC
+from npcore.environment import Environment
+
+brain = Brain()
+
+def idle_rule(context):
+    return {"run": 1.0, "wait": 1.0}
+
+brain.add_rule("idle", idle_rule)
+
+npc = NPC("Guard", brain)
+npc.set_state("idle")
+
+env = Environment(width=8, height=6)
+env.add_npc(npc)
+
+env.run(steps=5)
+
+print(env.summary())
 
 ---
 
 ## Características principales
 
-- Motor de decisiones modular (`Brain`)
-- Soporte para reglas en dos formatos:
-  - `rule(context)`
-  - `rule(npc, context)`
-- NPCs con:
-  - estado y contexto dinámico
-  - memoria (recordar, recuperar y olvidar información)
-  - objetivos (goals)
-  - prioridades
-  - emociones (como miedo y agresión)
-  - grupo y jerarquía social (rango)
-- Sistema de entorno (`Environment`):
-  - ejecución por pasos (simulation loop)
-  - eventos globales
-  - detección de proximidad
-  - interacción entre NPCs
-- Influencia social entre agentes
-- Integración de emociones y objetivos en la toma de decisiones
-- Sistema de aprendizaje básico basado en resultados previos
-- Normalización de probabilidades en decisiones
-- Tests automatizados con pytest
+Sistema de decisiones
+	•	Motor de reglas (Brain)
+	•	Soporte para reglas:
+	•	rule(context)
+	•	rule(npc, context)
+	•	Selección probabilística de acciones
+
+Memoria y aprendizaje
+	•	Memoria estructurada de eventos
+	•	Prioridad de memoria
+	•	Aprendizaje basado en resultados
+	•	Ajuste dinámico de decisiones
+
+Personalidad y emociones
+	•	Traits: agresión, sociabilidad, miedo, lealtad
+	•	Estados emocionales que afectan decisiones
+
+Interacción social
+	•	Relaciones entre NPCs
+	•	Comunicación entre aliados
+	•	Sistema de órdenes (líder → grupo)
+	•	Compartición de objetivos y prioridades
+
+Comportamiento grupal
+	•	Seguimiento de líder
+	•	Reagrupamiento
+	•	Coordinación de destino
+	•	Reacción a eventos compartados
+
+Movimiento y entorno
+	•	Pathfinding con A*
+	•	Obstáculos en el mapa
+	•	Zonas con costos de movimiento
+	•	Evaluación de riesgo local
+	•	Movimiento hacia objetivos
+
+Sistema de eventos
+	•	Eventos globales y locales
+	•	Reacciones basadas en reglas
+	•	Integración con el entorno
+
+Visualización
+	•	Render ASCII del entorno
+	•	Visualización con matplotlib
+	•	Simulación paso a paso
+
+Narrativa
+	•	Generación automática de historia
+	•	Resumen estructurado de simulación
+
 
 ---
+
 ## Arquitectura
+NPC → Brain → Rules → Probabilities → Decision
+Las decisiones son modificadas dinámicamente por:
+	•	emociones
+	•	prioridades
+	•	objetivos
+	•	aprendizaje (experiencias pasadas)
 
-El flujo principal del sistema es el siguiente:
+Esto permite un comportamiento flexible, adaptativo y emergente.
 
-NPC -> Brain -> Rules -> Probabilities -> Decision
-
-Dentro del Brain, las probabilidades son modificadas por:
-
-- prioridades del NPC
-- emociones
-- objetivos
-
-Esto permite una toma de decisiones flexible y extensible.
 
 ---
 
-## Instalación
-Dentro del `Brain`, las decisiones son modificadas por:
-
-- prioridades del NPC
-- emociones
-- objetivos
-- aprendizaje (experiencias pasadas)
-
-Esto permite una toma de decisiones flexible, dinámica y extensible.
-
----
-
-## Instalación
-
-```bash
-git clone https://github.com/Hotzh3/npcore.git
-cd npcore
-pip install -e .
-
-## Uso básico
-  from npcore.brain import Brain
-  from npcore.npc import NPC
-  from npcore.environment import Environment
-
-  brain = Brain()
-
-  def idle_rule(context):
-      return {"walk": 0.5, "rest": 0.5}
-
-  brain.add_rule("idle", idle_rule)
-
-  npc = NPC("Guard", brain)
-  npc.set_state("idle")
-
-  env = Environment()
-  env.add_npc(npc)
-
-  results = env.step()
-  print(results)
-
-## Ejemplo con interacción entre NPCs
-  npc1 = NPC("Guard", brain)
-  npc2 = NPC("Villager", brain)
-
-  npc1.set_state("idle")
-  npc2.set_state("idle")
-
-  npc1.set_position(0, 0)
-  npc2.set_position(1, 0)
-
-  env = Environment()
-  env.add_npc(npc1)
-  env.add_npc(npc2)
-
-  results = env.step()
-
-## Para ejecutar todos los test
-  pytest --cache-clear
 
 ## Estructura del proyecto
-  src/npcore/
-      brain.py
-      npc.py
-      environment.py
-      probability.py
-      utility.py
+src/npcore/
+    brain.py
+    npc.py
+    environment.py
+    pathfinding.py
+    probability.py
+    story_engine.py
 
-  tests/
-      test_npc.py
-      test_environment.py
-      test_probability.py
+tests/
+    test_npc.py
+    test_environment.py
+    test_probability.py
 
-  examples/
-      demo_simple.py
-      demo_interaction.py
-      demo_simulation.py
+examples/
+    demo_simple.py
+    demo_interaction.py
+    demo_simulation.py
 
-  assets/
-      demo_simple.png
-      demo_interaction.png
-      demo_simulation.png
-      tests.png
+notebooks/
+    tutorial_npcore.ipynb
 
-## Ejecución
-
-### Demo simple
-![Demo simple](assets/demo_simple.png)
-
-### Demo interacción
-![Demo interacción](assets/demo_interaction.png)
-
-### Tests
-![Tests](assets/tests.png)
-
-### Demo simulación completa
-![Demo simulación](assets/demo_simulation.png)
+docs/
+    demo.gif
