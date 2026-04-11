@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from npcore.pathfinding import a_star
 from npcore.brain import Brain
 
 
@@ -137,7 +137,7 @@ class NPC:
 
     def move_toward_destination(self) -> tuple[int, int] | None:
         """
-        Move one step toward the current destination.
+        Move one step toward the current destination using simple axis-based movement.
         """
         if self.position is None or self.destination is None:
             return self.position
@@ -155,6 +155,21 @@ class NPC:
             y -= 1
 
         self.position = (x, y)
+        return self.position
+
+
+
+
+    def move_smart(self, env):
+        if self.position is None or self.destination is None:
+            return self.position
+
+        path = a_star(self.position, self.destination, env)
+
+        if not path:
+            return self.position
+
+        self.position = path[0]
         return self.position
     
     def distance_to(self, x: int, y: int) -> int | None:
