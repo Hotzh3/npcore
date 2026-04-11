@@ -1011,3 +1011,37 @@ def test_npc_does_not_issue_order_without_group():
 
     assert updated == 0
     assert ally.has_memory_event("order") is False
+    
+def test_npc_can_store_event_priority():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.remember_event("danger", source="Scout", priority=5)
+
+    assert npc.memory_log[0]["priority"] == 5
+    
+def test_npc_memory_is_trimmed_to_limit():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.memory_limit = 3
+
+    npc.remember_event("a", priority=1)
+    npc.remember_event("b", priority=2)
+    npc.remember_event("c", priority=3)
+    npc.remember_event("d", priority=4)
+
+    assert len(npc.memory_log) == 3
+    
+def test_npc_keeps_higher_priority_memories():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.memory_limit = 2
+
+    npc.remember_event("low", priority=1)
+    npc.remember_event("medium", priority=3)
+    npc.remember_event("high", priority=5)
+
+    event_types = {event["type"] for event in npc.memory_log}
+
+    assert "high" in event_types
+    assert "medium" in event_types
