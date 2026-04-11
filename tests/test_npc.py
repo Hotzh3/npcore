@@ -691,4 +691,89 @@ def test_npc_can_assess_local_risk():
     risk = npc.assess_local_risk(env)
 
     assert risk is not None
-    assert risk >= 8
+    assert risk >= 8    
+    
+def test_npc_can_detect_allies_nearby():
+    brain = make_brain()
+
+    guard = NPC("Guard", brain)
+    ally = NPC("Scout", brain)
+    outsider = NPC("Villager", brain)
+
+    guard.set_group("guards")
+    ally.set_group("guards")
+    outsider.set_group("villagers")
+
+    nearby = guard.get_allies_nearby([ally, outsider])
+
+    assert ally in nearby
+    assert outsider not in nearby   
+    
+def test_npc_can_regroup_with_allies():
+    brain = make_brain()
+
+    guard = NPC("Guard", brain)
+    scout = NPC("Scout", brain)
+
+    guard.set_group("guards")
+    scout.set_group("guards")
+
+    guard.set_position(0, 0)
+    scout.set_position(2, 1)
+
+    destination = guard.regroup_with_allies([scout])
+
+    assert destination == (2, 1)
+    assert guard.destination == (2, 1)
+    
+def test_npc_regroup_returns_none_without_allies():
+    brain = make_brain()
+
+    guard = NPC("Guard", brain)
+    villager = NPC("Villager", brain)
+
+    guard.set_group("guards")
+    villager.set_group("villagers")
+
+    guard.set_position(0, 0)
+    villager.set_position(2, 1)
+
+    destination = guard.regroup_with_allies([villager])
+
+    assert destination is None
+    assert guard.destination is None    
+    
+def test_npc_can_follow_group_leader():
+    brain = make_brain()
+
+    guard = NPC("Guard", brain)
+    leader = NPC("Captain", brain)
+
+    guard.set_group("guards")
+    leader.set_group("guards")
+    leader.set_rank("leader")
+
+    guard.set_position(0, 0)
+    leader.set_position(3, 0)
+
+    destination = guard.follow_group_leader([leader])
+
+    assert destination == (3, 0)
+    assert guard.destination == (3, 0)
+    
+def test_npc_follow_group_leader_returns_none_without_leader():
+    brain = make_brain()
+
+    guard = NPC("Guard", brain)
+    ally = NPC("Scout", brain)
+
+    guard.set_group("guards")
+    ally.set_group("guards")
+
+    guard.set_position(0, 0)
+    ally.set_position(3, 0)
+
+    destination = guard.follow_group_leader([ally])
+
+    assert destination is None
+    assert guard.destination is None    

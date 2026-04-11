@@ -256,6 +256,52 @@ class NPC:
 
         return influence
 
+    def get_allies_nearby(self, others: list["NPC"]) -> list["NPC"]:
+        """
+        Return nearby NPCs that belong to the same group.
+        """
+        return [other for other in others if other.group == self.group and other is not self]
+    
+    def regroup_with_allies(self, others: list["NPC"]) -> tuple[int, int] | None:
+        """
+        Set destination to the nearest allied NPC position.
+        """
+        allies = [
+            other for other in others
+            if other.group == self.group and other is not self and other.position is not None
+        ]
+
+        if self.position is None or not allies:
+            return None
+
+        nearest_ally = min(
+            allies,
+            key=lambda other: abs(self.position[0] - other.position[0]) + abs(self.position[1] - other.position[1]),
+        )
+
+        self.destination = nearest_ally.position
+        return self.destination
+    
+    def follow_group_leader(self, others: list["NPC"]) -> tuple[int, int] | None:
+        """
+        Set destination to the nearest leader in the same group.
+        """
+        leaders = [
+            other for other in others
+            if other.group == self.group and other.rank == "leader" and other is not self and other.position is not None
+        ]
+
+        if self.position is None or not leaders:
+            return None
+
+        nearest_leader = min(
+            leaders,
+            key=lambda other: abs(self.position[0] - other.position[0]) + abs(self.position[1] - other.position[1]),
+        )
+
+        self.destination = nearest_leader.position
+        return self.destination
+    
     def greet(self, other: "NPC") -> str:
         return f"{self.name} says hello to {other.name}"
 

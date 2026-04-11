@@ -603,3 +603,34 @@ def test_fearful_npc_prefers_run_when_local_risk_is_high():
     results = [npc.act() for _ in range(100)]
 
     assert results.count("run") > results.count("wait")
+    
+def test_npc_prefers_following_leader_when_grouped_and_afraid():
+    brain = Brain()
+
+    def group_rule(npc, context):
+        nearby = context.get("nearby", [])
+
+        target = npc.follow_group_leader(nearby)
+        if target is not None:
+            return {"follow": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("group", group_rule)
+
+    guard = NPC("Guard", brain)
+    guard.set_state("group")
+    guard.set_group("guards")
+    guard.set_position(0, 0)
+
+    leader = NPC("Captain", brain)
+    leader.set_group("guards")
+    leader.set_rank("leader")
+    leader.set_position(2, 0)
+
+    guard.update_context(nearby=[leader])
+
+    result = guard.act()
+
+    assert result == "follow"
+    assert guard.destination == (2, 0)
