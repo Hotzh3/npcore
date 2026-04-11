@@ -1,5 +1,5 @@
 
-# npcore
+# Npcore
 > Framework de simulación de NPCs con inteligencia emergente, comportamiento social y toma de decisiones adaptativa.
 
 **npcore** es una librería en Python para simular NPCs (Non-Player Characters) inteligentes en entornos dinámicos.  
