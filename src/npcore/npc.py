@@ -60,6 +60,8 @@ class NPC:
         self.action_history: dict[str, list[bool]] = {}
         
         self.role: str | None = None
+        
+        self.memory_limit = 20
 
     def set_state(self, state: str) -> None:
         self.state = state
@@ -83,6 +85,8 @@ class NPC:
         source: str | None = None,
         target: str | None = None,
         detail: str | None = None,
+        priority: int = 1,
+
     ) -> None:
         """
         Store a structured event in memory.
@@ -92,8 +96,10 @@ class NPC:
             "source": source,
             "target": target,
             "detail": detail,
+            "priority": priority,
         }
         self.memory_log.append(event)
+        self.trim_memory()
 
     def get_memory_log(self) -> list[dict]:
         """
@@ -566,3 +572,13 @@ class NPC:
 
     def get_role(self) -> str | None:
         return self.role
+    
+    def trim_memory(self) -> None:
+        """
+        Keep only the most important and recent memory events.
+        """
+        if len(self.memory_log) <= self.memory_limit:
+            return
+
+        self.memory_log.sort(key=lambda event: event.get("priority", 1), reverse=True)
+        self.memory_log = self.memory_log[: self.memory_limit]
