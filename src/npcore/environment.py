@@ -16,9 +16,16 @@ class Environment:
         self.global_state: dict = {}
         self.events: list[str] = []
         self.history: list[list[tuple[str, str]]] = []
+        self.modules: list = []
 
     def add_npc(self, npc: NPC) -> None:
         self.npcs.append(npc)
+        
+    def add_module(self, module) -> None:
+        """
+        Register an environment module.
+        """
+        self.modules.append(module)
 
     def trigger_event(self, event) -> None:
         """
@@ -44,6 +51,9 @@ class Environment:
             }
 
         self.events.append(structured_event)
+            
+        for module in self.modules:
+            module.on_event(self, structured_event)
 
     def get_nearby(self, npc: NPC, radius: int = 1) -> list[NPC]:
         """
@@ -73,6 +83,9 @@ class Environment:
         Returns list of (npc_name, action)
         """
         results = []
+        
+        for module in self.modules:
+            module.before_step(self)
 
         for npc in self.npcs:
             npc.update_context(events=list(self.events))
@@ -83,6 +96,10 @@ class Environment:
             for other in nearby:
                 message = npc.greet(other)
                 results.append(("message", message))
+
+        for module in self.modules:
+            module.after_step(self, results)
+
 
         self.tick_count += 1
         self.history.append(results)
@@ -121,3 +138,71 @@ class Environment:
             "history_length": len(self.history),
             "action_counts": self.action_counts(),
         }
+        
+    def render_grid(self, width: int, height: int) -> str:
+        """
+        Render NPC positions as a professional ASCII grid with coordinates and legend.
+        """
+        grid = [["." for _ in range(width)] for _ in range(height)]
+        legend: dict[str, str] = {}
+
+        for npc in self.npcs:
+            if npc.position is None:
+                continue
+
+            x, y = npc.position
+
+            if 0 <= x < width and 0 <= y < height:
+                symbol = npc.name[0].upper()
+                grid[y][x] = symbol
+                legend[symbol] = npc.name
+
+        header = "    " + "   ".join(str(x) for x in range(width))
+        separator = "  +" + "+".join(["---"] * width) + "+"
+
+        rows = [header, separator]
+
+        for y, row in enumerate(grid):
+            row_text = f"{y} | " + " | ".join(row) + " |"
+            rows.append(row_text)
+            rows.append(separator)
+
+        if legend:
+            rows.append("")
+            rows.append("Legend:")
+            for symbol, name in sorted(legend.items()):
+                rows.append(f"{symbol} = {name}")
+
+        return "\n".join(rows)
+    
+    def render_matplotlib(self):
+        """
+        Render NPC positions using matplotlib for a more professional visualization.
+        """
+        import matplotlib.pyplot as plt
+
+        x_coords = []
+        y_coords = []
+        labels = []
+
+        for npc in self.npcs:
+            if npc.position is None:
+                continue
+
+            x, y = npc.position
+            x_coords.append(x)
+            y_coords.append(y)
+            labels.append(npc.name)
+
+        plt.figure()
+        plt.scatter(x_coords, y_coords)
+
+        for i, label in enumerate(labels):
+            plt.text(x_coords[i], y_coords[i], label)
+
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.title("NPC World Visualization")
+        plt.grid()
+
+        plt.show()

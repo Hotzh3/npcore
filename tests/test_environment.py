@@ -2,6 +2,8 @@ from npcore.brain import Brain
 from npcore.npc import NPC
 from npcore.environment import Environment
 from npcore.story_engine import StoryEngine
+from npcore.modules import StepCounterModule, BaseModule
+
 
 
 def test_environment_runs():
@@ -217,3 +219,123 @@ def test_story_engine_handles_unknown_actions():
     story = story_engine.generate(history)
 
     assert story[0] == "Guard performed action 'trade'."
+
+def test_render_grid_shows_npc_positions():
+    brain = Brain()
+
+    def idle_rule(context):
+        return {"wait": 1.0}
+
+    brain.add_rule("idle", idle_rule)
+
+    guard = NPC("Guard", brain)
+    villager = NPC("Villager", brain)
+
+    guard.set_position(0, 0)
+    villager.set_position(2, 0)
+
+    env = Environment()
+    env.add_npc(guard)
+    env.add_npc(villager)
+
+    grid = env.render_grid(width=3, height=2)
+
+    assert "0 | G | . | V |" in grid
+    assert "Legend:" in grid
+    assert "G = Guard" in grid
+    assert "V = Villager" in grid
+
+def test_render_grid_ignores_npcs_without_position():
+    brain = Brain()
+
+    def idle_rule(context):
+        return {"wait": 1.0}
+
+    brain.add_rule("idle", idle_rule)
+
+    guard = NPC("Guard", brain)
+    villager = NPC("Villager", brain)
+
+    guard.set_position(1, 0)
+
+    env = Environment()
+    env.add_npc(guard)
+    env.add_npc(villager)
+
+    grid = env.render_grid(width=3, height=2)
+
+    assert "0 | . | G | . |" in grid
+    assert "G = Guard" in grid
+    assert "V = Villager" not in grid
+    
+def test_render_grid_ignores_npcs_outside_bounds():
+    brain = Brain()
+
+    def idle_rule(context):
+        return {"wait": 1.0}
+
+    brain.add_rule("idle", idle_rule)
+
+    guard = NPC("Guard", brain)
+    scout = NPC("Scout", brain)
+
+    guard.set_position(0, 0)
+    scout.set_position(5, 5)
+
+    env = Environment()
+    env.add_npc(guard)
+    env.add_npc(scout)
+
+    grid = env.render_grid(width=2, height=2)
+
+    assert "0 | G | . |" in grid
+    assert "G = Guard" in grid
+    assert "S = Scout" not in grid
+    
+def test_environment_can_register_module():
+    env = Environment()
+    module = StepCounterModule()
+
+    env.add_module(module)
+
+    assert len(env.modules) == 1
+    assert env.modules[0] is module
+    
+def test_module_hooks_run_during_step():
+    brain = Brain()
+
+    def idle_rule(context):
+        return {"wait": 1.0}
+
+    brain.add_rule("idle", idle_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+
+    env = Environment()
+    env.add_npc(npc)
+
+    module = StepCounterModule()
+    env.add_module(module)
+
+    env.step()
+
+    assert module.before_calls == 1
+    assert module.after_calls == 1
+    
+def test_module_on_event_hook_runs():
+    class EventRecorderModule(BaseModule):
+        def __init__(self) -> None:
+            self.events_seen = []
+
+        def on_event(self, env, event: dict) -> None:
+            self.events_seen.append(event)
+
+    env = Environment()
+    module = EventRecorderModule()
+    env.add_module(module)
+
+    env.trigger_event("danger")
+
+    assert len(module.events_seen) == 1
+    assert module.events_seen[0]["type"] == "danger"
