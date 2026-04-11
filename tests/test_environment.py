@@ -470,3 +470,18 @@ def test_npc_can_choose_market_when_trade_goal_exists():
 
     assert result == "move"
     assert npc.destination == (2, 1)
+    
+def test_environment_can_add_blocked_cell():
+    env = Environment(width=5, height=5)
+
+    env.add_block(2, 2)
+
+    assert env.is_blocked(2, 2) is True
+    
+def test_environment_can_remove_blocked_cell():
+    env = Environment(width=5, height=5)
+
+    env.add_block(2, 2)
+    env.remove_block(2, 2)
+
+    assert env.is_blocked(2, 2) is False        

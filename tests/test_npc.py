@@ -563,3 +563,83 @@ def test_learning_increases_run_utility_directly():
     adjusted = brain._apply_learning(utilities, npc)
 
     assert adjusted["run"] > adjusted["walk"]
+    
+def test_npc_moves_using_pathfinding():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(0, 0)
+    npc.set_destination(2, 0)
+
+    env = Environment(width=5, height=5)
+
+    new_pos = npc.move_smart(env)
+
+    assert new_pos == (1, 0)
+    
+def test_npc_flee_sets_destination():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+    env.add_zone("safe_house", [(4, 4), (2, 1)])
+
+    target = npc.flee_to_zone(env, "safe_house")
+
+    assert target in [(4, 4), (2, 1)]
+    assert npc.destination == target
+    
+def test_npc_pursues_goal():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(0, 0)
+    npc.set_goal("survive")
+
+    env = Environment(width=5, height=5)
+    env.add_zone("safe_house", [(4, 4)])
+
+    target = npc.pursue_goal_in_environment(env)
+
+    assert target == (4, 4)
+    
+def test_npc_move_smart_avoids_blocked_cell():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(0, 0)
+    npc.set_destination(2, 0)
+
+    env = Environment(width=5, height=5)
+    env.add_block(1, 0)
+
+    new_pos = npc.move_smart(env)
+
+    assert new_pos != (1, 0)
+    assert new_pos in {(0, 1)}
+    
+def test_npc_move_smart_returns_same_position_if_path_blocked():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(0, 0)
+    npc.set_destination(1, 1)
+
+    env = Environment(width=2, height=2)
+    env.add_block(1, 0)
+    env.add_block(0, 1)
+
+    new_pos = npc.move_smart(env)
+
+    assert new_pos == (0, 0)
+    

@@ -20,6 +20,7 @@ class Environment:
         self.width = width
         self.height = height
         self.zones: dict[str, list[tuple[int, int]]] = {}
+        self.blocked_cells: set[tuple[int, int]] = set()
 
     def add_npc(self, npc: NPC) -> None:
         self.npcs.append(npc)
@@ -237,3 +238,25 @@ class Environment:
         plt.grid()
 
         plt.show()
+        
+    def get_zone_cells(self, zone_name: str) -> list[tuple[int, int]]:
+        return self.zones.get(zone_name, [])
+    
+    def add_block(self, x: int, y: int) -> None:
+        """
+        Mark a cell as blocked.
+        """
+        if self.is_within_bounds(x, y):
+            self.blocked_cells.add((x, y))
+
+    def remove_block(self, x: int, y: int) -> None:
+        """
+        Remove a blocked cell.
+        """
+        self.blocked_cells.discard((x, y))
+
+    def is_blocked(self, x: int, y: int) -> bool:
+        """
+        Check whether a cell is blocked.
+        """
+        return (x, y) in self.blocked_cells
