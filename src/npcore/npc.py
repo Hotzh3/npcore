@@ -181,6 +181,16 @@ class NPC:
 
         px, py = self.position
         return abs(px - x) + abs(py - y)
+    
+    def assess_local_risk(self, env, radius: int = 1) -> int | None:
+        """
+        Assess the total local movement risk around the NPC.
+        """
+        if self.position is None:
+            return None
+
+        x, y = self.position
+        return env.get_local_risk(x, y, radius)
 
     def set_group(self, group: str) -> None:
         self.group = group

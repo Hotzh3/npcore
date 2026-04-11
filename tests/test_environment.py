@@ -564,3 +564,42 @@ def test_environment_can_clear_zone_cost():
 
     assert env.get_cell_cost(1, 1) == 1
     assert env.get_cell_cost(1, 2) == 1
+    
+def test_environment_can_measure_local_risk():
+    env = Environment(width=5, height=5)
+    env.set_cell_cost(1, 1, 5)
+    env.set_cell_cost(2, 1, 3)
+
+    risk = env.get_local_risk(1, 1, radius=1)
+
+    assert risk >= 8    
+    
+def test_fearful_npc_prefers_run_when_local_risk_is_high():
+    brain = Brain()
+
+    def risk_rule(npc, context):
+        env = context.get("environment")
+        risk = npc.assess_local_risk(env)
+
+        if risk is not None and risk >= 10:
+            return {"run": 2.0, "wait": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("react", risk_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("react")
+    npc.set_position(1, 1)
+    npc.set_personality_trait("fearfulness", 1.0)
+
+    env = Environment(width=5, height=5)
+    env.set_cell_cost(1, 1, 5)
+    env.set_cell_cost(2, 1, 5)
+    env.add_npc(npc)
+
+    npc.update_context(environment=env)
+
+    results = [npc.act() for _ in range(100)]
+
+    assert results.count("run") > results.count("wait")

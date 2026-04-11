@@ -308,3 +308,16 @@ class Environment:
         Return the movement cost of a cell.
         """
         return self.cell_costs.get((x, y), 1)
+    
+    def get_local_risk(self, x: int, y: int, radius: int = 1) -> int:
+        """
+        Sum movement costs around a position to estimate local spatial risk.
+        """
+        total = 0
+
+        for cy in range(y - radius, y + radius + 1):
+            for cx in range(x - radius, x + radius + 1):
+                if self.is_within_bounds(cx, cy):
+                    total += self.get_cell_cost(cx, cy)
+
+        return total

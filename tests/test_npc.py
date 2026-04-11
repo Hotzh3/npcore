@@ -676,3 +676,19 @@ def test_npc_move_smart_avoids_danger_zone_cost():
     new_pos = npc.move_smart(env)
 
     assert new_pos == (0, 1)
+    
+def test_npc_can_assess_local_risk():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+    npc.set_position(1, 1)
+
+    env = Environment(width=5, height=5)
+    env.set_cell_cost(1, 1, 5)
+    env.set_cell_cost(2, 1, 3)
+
+    risk = npc.assess_local_risk(env)
+
+    assert risk is not None
+    assert risk >= 8
