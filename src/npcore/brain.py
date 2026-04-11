@@ -107,14 +107,39 @@ class Brain:
         adjusted = dict(utilities)
 
         for action, value in adjusted.items():
-            success_rate = npc.get_action_success_rate(action)
-
-            if success_rate > 0:
-                adjusted[action] = value * (1 + success_rate)
+            learning_weight = npc.get_learning_weight(action)
+            adjusted[action] = value * learning_weight
 
         return adjusted
 
-   
+    def _apply_personality(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust action utilities according to stable personality traits.
+        """
+        if npc is None:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+
+        aggression = npc.get_personality_trait("aggression")
+        sociability = npc.get_personality_trait("sociability")
+        fearfulness = npc.get_personality_trait("fearfulness")
+        loyalty = npc.get_personality_trait("loyalty")
+
+        for action, value in adjusted.items():
+            if action in {"attack", "defend"}:
+                adjusted[action] = value * (1 + aggression)
+
+            if action in {"talk", "help", "follow"}:
+                adjusted[action] = adjusted[action] * (1 + sociability)
+
+            if action in {"run", "hide"}:
+                adjusted[action] = adjusted[action] * (1 + fearfulness)
+
+            if action in {"help", "follow", "defend"}:
+                adjusted[action] = adjusted[action] * (1 + loyalty)
+
+        return adjusted
 
     def decide(self, state: str, context: dict, npc=None) -> str:
         """
@@ -125,7 +150,34 @@ class Brain:
         utilities = self._apply_emotions(utilities, npc)
         utilities = self._apply_goal(utilities, npc)
         utilities = self._apply_learning(utilities, npc)
+        utilities = self._apply_personality(utilities, npc)
+        utilities = self._apply_internal_conflicts(utilities, npc)
 
         probabilities = normalize_utilities(utilities)
 
         return weighted_choice(probabilities)
+    
+    def _apply_internal_conflicts(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust utilities when internal drives conflict.
+        """
+        if npc is None:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+
+        fear = npc.get_emotion("fear") + npc.get_personality_trait("fearfulness")
+        loyalty = npc.get_personality_trait("loyalty")
+        aggression = npc.get_emotion("aggression") + npc.get_personality_trait("aggression")
+
+        for action, value in adjusted.items():
+            if action == "run":
+                adjusted[action] = value * (1 + fear)
+
+            if action in {"follow", "defend", "help"}:
+                adjusted[action] = value * (1 + loyalty)
+
+            if action == "attack":
+                adjusted[action] = value * (1 + aggression)
+
+        return adjusted
