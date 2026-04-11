@@ -357,6 +357,47 @@ class NPC:
         return updated
     
     
+    def issue_order_to_allies(
+        self,
+        others: list["NPC"],
+        order_type: str,
+        detail: str | None = None,
+    ) -> int:
+        """
+        Send an order to allies in the same group.
+        Returns the number of allies updated.
+        """
+        if self.group is None:
+            return 0
+
+        updated = 0
+
+        for other in others:
+            if other is self:
+                continue
+            if other.group != self.group:
+                continue
+
+            other.remember_event(
+                event_type="order",
+                source=self.name,
+                target=other.name,
+                detail=order_type if detail is None else f"{order_type}:{detail}",
+            )
+            updated += 1
+
+        return updated
+    
+    def get_latest_order(self) -> str | None:
+        """
+        Return the most recent shared order detail, if any.
+        """
+        for event in reversed(self.memory_log):
+            if event["type"] == "order":
+                return event["detail"]
+        return None
+    
+    
     def share_goal_with_allies(self, others: list["NPC"]) -> int:
         """
         Share current goal with allies in the same group.

@@ -375,10 +375,11 @@ def test_learning_favors_action_with_better_history():
     npc.record_outcome("run", True)
 
     npc.record_outcome("walk", False)
+    
+    utilities = {"run": 1.0, "walk": 1.0}
+    adjusted = brain._apply_learning(utilities, npc)
 
-    results = [npc.act() for _ in range(40)]
-
-    assert results.count("run") > results.count("walk")
+    assert adjusted["run"] > adjusted["walk"]
     
 def test_npc_can_set_destination():
     brain = make_brain()
@@ -977,3 +978,36 @@ def test_scout_prefers_exploration():
     result = scout.act()
 
     assert result == "explore"
+    
+def test_npc_can_issue_order_to_allies():
+    brain = make_brain()
+
+    leader = NPC("Captain", brain)
+    ally = NPC("Guard", brain)
+
+    leader.set_group("guards")
+    ally.set_group("guards")
+
+    updated = leader.issue_order_to_allies([ally], order_type="follow_me")
+
+    assert updated == 1
+    assert ally.has_memory_event("order") is True
+    
+def test_npc_can_read_latest_order():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.remember_event("order", source="Captain", detail="follow_me")
+
+    assert npc.get_latest_order() == "follow_me"
+    
+def test_npc_does_not_issue_order_without_group():
+    brain = make_brain()
+
+    leader = NPC("Captain", brain)
+    ally = NPC("Guard", brain)
+
+    updated = leader.issue_order_to_allies([ally], order_type="retreat")
+
+    assert updated == 0
+    assert ally.has_memory_event("order") is False

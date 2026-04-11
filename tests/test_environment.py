@@ -756,3 +756,58 @@ def test_npc_prefers_run_after_receiving_group_priority():
     results = [ally.act() for _ in range(100)]
 
     assert results.count("run") > results.count("wait")
+    
+
+def test_npc_can_follow_order_from_leader():
+    brain = Brain()
+
+    def rule(npc, context):
+        latest_order = npc.get_latest_order()
+
+        if latest_order == "follow_me":
+            return {"follow": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("ordered", rule)
+
+    leader = NPC("Captain", brain)
+    ally = NPC("Guard", brain)
+
+    leader.set_group("guards")
+    ally.set_group("guards")
+    ally.set_state("ordered")
+
+    leader.issue_order_to_allies([ally], order_type="follow_me")
+
+    result = ally.act()
+
+    assert result == "follow"
+    
+
+def test_npc_can_retreat_after_order():
+    brain = Brain()
+
+    def rule(npc, context):
+        latest_order = npc.get_latest_order()
+
+        if latest_order == "retreat":
+            return {"run": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("ordered", rule)
+
+    leader = NPC("Captain", brain)
+    ally = NPC("Guard", brain)
+
+    leader.set_group("guards")
+    ally.set_group("guards")
+    ally.set_state("ordered")
+
+    leader.issue_order_to_allies([ally], order_type="retreat")
+
+    result = ally.act()
+
+    assert result == "run"
+    
