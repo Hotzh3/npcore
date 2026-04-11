@@ -323,6 +323,43 @@ class NPC:
 
         return updated
     
+    def share_event_with_allies(
+        self,
+        others: list["NPC"],
+        event_type: str,
+        detail: str | None = None,
+    ) -> int:
+        """
+        Share a structured event with allies in the same group.
+        Returns the number of allies updated.
+        """
+        if self.group is None:
+            return 0
+
+        updated = 0
+
+        for other in others:
+            if other is self:
+                continue
+            if other.group != self.group:
+                continue
+
+            other.remember_event(
+                event_type=event_type,
+                source=self.name,
+                target=other.name,
+                detail=detail,
+            )
+            updated += 1
+
+        return updated
+    
+    def has_memory_event(self, event_type: str) -> bool:
+        """
+        Return True if the NPC has at least one remembered event of the given type.
+        """
+        return any(event["type"] == event_type for event in self.memory_log)
+    
     def receive_shared_destination(self, destination: tuple[int, int] | None) -> None:
         """
         Accept a destination received from an ally.

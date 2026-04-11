@@ -816,3 +816,48 @@ def test_npc_can_receive_shared_destination():
     npc.receive_shared_destination((3, 2))
 
     assert npc.destination == (3, 2)
+
+def test_npc_can_share_event_with_allies():
+    brain = make_brain()
+
+    leader = NPC("Captain", brain)
+    ally1 = NPC("Guard", brain)
+    ally2 = NPC("Scout", brain)
+
+    leader.set_group("guards")
+    ally1.set_group("guards")
+    ally2.set_group("guards")
+
+    updated = leader.share_event_with_allies(
+        [ally1, ally2],
+        event_type="danger",
+        detail="enemy nearby",
+    )
+
+    assert updated == 2
+    assert ally1.has_memory_event("danger") is True
+    assert ally2.has_memory_event("danger") is True
+    
+def test_npc_does_not_share_event_without_group():
+    brain = make_brain()
+
+    npc = NPC("Wanderer", brain)
+    other = NPC("Guard", brain)
+
+    updated = npc.share_event_with_allies(
+        [other],
+        event_type="danger",
+        detail="enemy nearby",
+    )
+
+    assert updated == 0
+    assert other.has_memory_event("danger") is False    
+    
+def test_npc_can_detect_memory_event():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.remember_event("danger", source="Scout")
+
+    assert npc.has_memory_event("danger") is True
+    assert npc.has_memory_event("help") is False

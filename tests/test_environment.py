@@ -659,3 +659,50 @@ def test_group_can_share_safe_destination():
 
     assert result == "signal"
     assert ally.destination == (4, 4)
+    
+def test_group_can_share_danger_alert():
+    brain = Brain()
+
+    def leader_rule(npc, context):
+        nearby = context.get("nearby", [])
+        npc.share_event_with_allies(nearby, event_type="danger", detail="enemy nearby")
+        return {"signal": 1.0}
+
+    brain.add_rule("group", leader_rule)
+
+    leader = NPC("Captain", brain)
+    leader.set_state("group")
+    leader.set_group("guards")
+
+    ally = NPC("Guard", brain)
+    ally.set_group("guards")
+
+    leader.update_context(nearby=[ally])
+
+    result = leader.act()
+
+    assert result == "signal"
+    assert ally.has_memory_event("danger") is True
+    
+def test_npc_can_run_after_receiving_shared_danger_event():
+    brain = Brain()
+
+    def react_rule(npc, context):
+        if npc.has_memory_event("danger"):
+            return {"run": 1.0}
+        return {"wait": 1.0}
+
+    brain.add_rule("react", react_rule)
+
+    leader = NPC("Captain", brain)
+    ally = NPC("Guard", brain)
+
+    leader.set_group("guards")
+    ally.set_group("guards")
+    ally.set_state("react")
+
+    leader.share_event_with_allies([ally], event_type="danger", detail="enemy nearby")
+
+    result = ally.act()
+
+    assert result == "run"
