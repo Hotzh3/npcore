@@ -340,3 +340,41 @@ def test_recall_last_event_returns_none_when_empty():
 
     assert npc.recall_last_event() is None
     
+def test_learning_weight_defaults_to_one_without_history():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+
+    assert npc.get_learning_weight("run") == 1.0
+
+def test_learning_weight_increases_with_success():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", False)
+
+    assert npc.get_learning_weight("run") > 1.0 
+    
+def test_learning_favors_action_with_better_history():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 1.0, "walk": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+    npc.record_outcome("run", True)
+
+    npc.record_outcome("walk", False)
+
+    results = [npc.act() for _ in range(40)]
+
+    assert results.count("run") > results.count("walk")
+    

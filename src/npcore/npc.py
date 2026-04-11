@@ -220,3 +220,14 @@ class NPC:
             return 0.0
 
         return sum(history) / len(history)
+    
+    def get_learning_weight(self, action: str) -> float:
+        """
+        Convert past action success into a multiplicative learning weight.
+        """
+        success_rate = self.get_action_success_rate(action)
+
+        if success_rate == 0.0:
+            return 1.0
+
+        return 1.0 + success_rate
