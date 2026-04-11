@@ -35,6 +35,9 @@ class NPC:
         self.rank: str | None = None
         self.reputation: dict[str, float] = {}
 
+        # relaciones con otros NPCs
+        self.relationships: dict[str, float] = {}
+        
         # emociones
         self.emotions: dict[str, float] = {
             "fear": 0.0,
@@ -76,11 +79,34 @@ class NPC:
     def set_rank(self, rank: str) -> None:
         self.rank = rank
 
+    def set_relationship(self, other_name: str, value: float) -> None:
+        """
+        Set relationship value with another NPC.
+        """
+        self.relationships[other_name] = value
+
+    def change_relationship(self, other_name: str, delta: float) -> None:
+        """
+        Increase or decrease relationship value with another NPC.
+        """
+        current = self.relationships.get(other_name, 0.0)
+        self.relationships[other_name] = current + delta
+
+    def get_relationship(self, other_name: str) -> float:
+        """
+        Get relationship value with another NPC.
+        """
+        return self.relationships.get(other_name, 0.0)
+
+
+
     def set_emotion(self, emotion: str, value: float) -> None:
         self.emotions[emotion] = value
 
     def get_emotion(self, emotion: str) -> float:
         return self.emotions.get(emotion, 0.0)
+    
+    
 
     def get_social_influence(self, others: list["NPC"]) -> dict:
         influence = {

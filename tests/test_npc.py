@@ -186,3 +186,58 @@ def test_learning_does_not_boost_action_without_history():
     history_walk = npc.get_action_success_rate("walk")
 
     assert history_run > history_walk
+    
+def test_npc_can_set_relationship():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.set_relationship("Villager", 0.8)
+
+    assert npc.get_relationship("Villager") == 0.8
+
+
+def test_npc_can_change_relationship():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.set_relationship("Villager", 0.5)
+    npc.change_relationship("Villager", 0.2)
+
+    assert npc.get_relationship("Villager") == 0.7
+
+
+def test_npc_relationship_defaults_to_zero():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+
+    assert npc.get_relationship("Unknown") == 0.0
+    
+def test_relationship_can_influence_decision():
+    brain = Brain()
+
+    def social_rule(npc, context):
+        target = context.get("target")
+
+        if target is None:
+            return {"wait": 1.0}
+
+        relationship = npc.get_relationship(target.name)
+
+        if relationship > 0.5:
+            return {"help": 1.0}
+
+        return {"ignore": 1.0}
+
+    brain.add_rule("social", social_rule)
+
+    guard = NPC("Guard", brain)
+    villager = NPC("Villager", brain)
+
+    guard.set_state("social")
+    guard.set_relationship("Villager", 0.9)
+    guard.update_context(target=villager)
+
+    action = guard.act()
+
+    assert action == "help"
