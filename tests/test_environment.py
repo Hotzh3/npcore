@@ -811,3 +811,21 @@ def test_npc_can_retreat_after_order():
 
     assert result == "run"
     
+def test_npc_with_fear_and_loyalty_faces_internal_conflict():
+    brain = Brain()
+
+    def conflict_rule(context):
+        return {"run": 1.0, "follow": 1.0}
+
+    brain.add_rule("conflict", conflict_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("conflict")
+    npc.set_emotion("fear", 1.0)
+    npc.set_personality_trait("loyalty", 1.0)
+
+    results = [npc.act() for _ in range(100)]
+
+    assert results.count("run") > 0
+    assert results.count("follow") > 0
+    

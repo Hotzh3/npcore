@@ -1045,3 +1045,54 @@ def test_npc_keeps_higher_priority_memories():
 
     assert "high" in event_types
     assert "medium" in event_types
+    
+def test_internal_conflict_fear_favors_run():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 1.0, "follow": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+    npc.set_emotion("fear", 1.0)
+
+    utilities = {"run": 1.0, "follow": 1.0}
+    adjusted = brain._apply_internal_conflicts(utilities, npc)
+
+    assert adjusted["run"] > adjusted["follow"]
+    
+def test_internal_conflict_loyalty_favors_follow():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 1.0, "follow": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+    npc.set_personality_trait("loyalty", 1.0)
+
+    utilities = {"run": 1.0, "follow": 1.0}
+    adjusted = brain._apply_internal_conflicts(utilities, npc)
+
+    assert adjusted["follow"] > adjusted["run"]
+    
+def test_internal_conflict_aggression_favors_attack():
+    brain = Brain()
+
+    def rule(context):
+        return {"attack": 1.0, "run": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+    npc.set_personality_trait("aggression", 1.0)
+
+    utilities = {"attack": 1.0, "run": 1.0}
+    adjusted = brain._apply_internal_conflicts(utilities, npc)
+
+    assert adjusted["attack"] > adjusted["run"]

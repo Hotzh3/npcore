@@ -151,7 +151,33 @@ class Brain:
         utilities = self._apply_goal(utilities, npc)
         utilities = self._apply_learning(utilities, npc)
         utilities = self._apply_personality(utilities, npc)
+        utilities = self._apply_internal_conflicts(utilities, npc)
 
         probabilities = normalize_utilities(utilities)
 
         return weighted_choice(probabilities)
+    
+    def _apply_internal_conflicts(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust utilities when internal drives conflict.
+        """
+        if npc is None:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+
+        fear = npc.get_emotion("fear") + npc.get_personality_trait("fearfulness")
+        loyalty = npc.get_personality_trait("loyalty")
+        aggression = npc.get_emotion("aggression") + npc.get_personality_trait("aggression")
+
+        for action, value in adjusted.items():
+            if action == "run":
+                adjusted[action] = value * (1 + fear)
+
+            if action in {"follow", "defend", "help"}:
+                adjusted[action] = value * (1 + loyalty)
+
+            if action == "attack":
+                adjusted[action] = value * (1 + aggression)
+
+        return adjusted
