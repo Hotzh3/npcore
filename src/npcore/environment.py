@@ -20,8 +20,30 @@ class Environment:
     def add_npc(self, npc: NPC) -> None:
         self.npcs.append(npc)
 
-    def trigger_event(self, event: str) -> None:
-        self.events.append(event)
+    def trigger_event(self, event) -> None:
+        """
+        Register an environment event.
+
+        Events can be passed as a simple string or as a structured dict.
+        """
+        if isinstance(event, str):
+            structured_event = {
+                "type": event,
+                "source": None,
+                "target": None,
+                "detail": None,
+                "severity": 1,
+            }
+        else:
+            structured_event = {
+                "type": event.get("type"),
+                "source": event.get("source"),
+                "target": event.get("target"),
+                "detail": event.get("detail"),
+                "severity": event.get("severity", 1),
+            }
+
+        self.events.append(structured_event)
 
     def get_nearby(self, npc: NPC, radius: int = 1) -> list[NPC]:
         """
@@ -53,7 +75,7 @@ class Environment:
         results = []
 
         for npc in self.npcs:
-            npc.update_context(events=self.events)
+            npc.update_context(events=list(self.events))
             action = npc.act()
             results.append((npc.name, action))
 

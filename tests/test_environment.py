@@ -56,8 +56,11 @@ def test_environment_event_propagation():
     brain = Brain()
 
     def danger_rule(npc, context):
-        if "danger" in context.get("events", []):
+        events = context.get("events", [])
+
+        if any(event["type"] == "danger" for event in events):
             return {"run": 1.0}
+
         return {"idle": 1.0}
 
     brain.add_rule("react", danger_rule)
@@ -116,3 +119,62 @@ def test_environment_summary_contains_action_counts():
     assert summary["npcs"] == 1
     assert summary["history_length"] == 2
     assert summary["action_counts"]["wait"] == 2
+    
+def test_trigger_event_converts_string_to_structured_event():
+    env = Environment()
+
+    env.trigger_event("danger")
+
+    assert len(env.events) == 1
+    assert env.events[0]["type"] == "danger"
+    assert env.events[0]["severity"] == 1
+    
+def test_trigger_event_accepts_structured_event():
+    env = Environment()
+
+    env.trigger_event(
+        {
+            "type": "danger",
+            "source": "enemy",
+            "target": "Guard",
+            "detail": "enemy nearby",
+            "severity": 3,
+        }
+    )
+
+    assert len(env.events) == 1
+    assert env.events[0]["type"] == "danger"
+    assert env.events[0]["source"] == "enemy"
+    assert env.events[0]["severity"] == 3
+    
+def test_npc_receives_structured_events_in_context():
+    brain = Brain()
+
+    def inspect_rule(npc, context):
+        events = context.get("events", [])
+
+        if events and events[0]["type"] == "danger":
+            return {"run": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("react", inspect_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("react")
+
+    env = Environment()
+    env.add_npc(npc)
+
+    env.trigger_event(
+        {
+            "type": "danger",
+            "source": "enemy",
+            "detail": "close threat",
+            "severity": 2,
+        }
+    )
+
+    results = env.step()
+
+    assert results[0][1] == "run"
