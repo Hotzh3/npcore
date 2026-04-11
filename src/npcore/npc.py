@@ -58,6 +58,8 @@ class NPC:
         
         # aprendizaje simple
         self.action_history: dict[str, list[bool]] = {}
+        
+        self.role: str | None = None
 
     def set_state(self, state: str) -> None:
         self.state = state
@@ -517,3 +519,9 @@ class NPC:
             return None
 
         return self.go_to_zone(env, zone_name)
+    
+    def set_role(self, role: str) -> None:
+        self.role = role
+
+    def get_role(self) -> str | None:
+        return self.role

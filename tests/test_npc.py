@@ -923,3 +923,57 @@ def test_npc_does_not_share_priorities_without_data():
 
     assert updated == 0
     assert other.priorities == {}
+    
+def test_npc_can_have_role():
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_role("guard")
+
+    assert npc.get_role() == "guard"
+    
+def test_guard_prefers_follow_when_leader_present():
+    brain = Brain()
+
+    def rule(npc, context):
+        nearby = context.get("nearby", [])
+
+        if npc.get_role() == "guard":
+            if any(o.rank == "leader" for o in nearby):
+                return {"follow": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("group", rule)
+
+    leader = NPC("Captain", brain)
+    leader.set_rank("leader")
+
+    guard = NPC("Guard", brain)
+    guard.set_role("guard")
+    guard.set_state("group")
+
+    guard.update_context(nearby=[leader])
+
+    result = guard.act()
+
+    assert result == "follow"
+    
+def test_scout_prefers_exploration():
+    brain = Brain()
+
+    def rule(npc, context):
+        if npc.get_role() == "scout":
+            return {"explore": 1.0}
+
+        return {"wait": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    scout = NPC("Scout", brain)
+    scout.set_role("scout")
+    scout.set_state("idle")
+
+    result = scout.act()
+
+    assert result == "explore"
