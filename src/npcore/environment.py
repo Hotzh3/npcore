@@ -171,19 +171,36 @@ class Environment:
             "action_counts": self.action_counts(),
         }
         
-    def render_grid(self, width: int, height: int) -> str:
+    def render_grid(self, width: int | None = None, height: int | None = None) -> str:
         """
-        Render NPC positions as a professional ASCII grid with coordinates and legend.
+        Render NPC positions, blocked cells, and destinations as an ASCII grid.
         """
+        width = self.width if width is None else width
+        height = self.height if height is None else height
+
         grid = [["." for _ in range(width)] for _ in range(height)]
         legend: dict[str, str] = {}
 
+        # Obstacles
+        for x, y in self.blocked_cells:
+            if 0 <= x < width and 0 <= y < height:
+                grid[y][x] = "#"
+
+        # Destinations
+        for npc in self.npcs:
+            if npc.destination is None:
+                continue
+
+            dx, dy = npc.destination
+            if 0 <= dx < width and 0 <= dy < height and grid[dy][dx] == ".":
+                grid[dy][dx] = "D"
+
+        # NPC positions override destination/empty cells
         for npc in self.npcs:
             if npc.position is None:
                 continue
 
             x, y = npc.position
-
             if 0 <= x < width and 0 <= y < height:
                 symbol = npc.name[0].upper()
                 grid[y][x] = symbol
@@ -191,7 +208,6 @@ class Environment:
 
         header = "    " + "   ".join(str(x) for x in range(width))
         separator = "  +" + "+".join(["---"] * width) + "+"
-
         rows = [header, separator]
 
         for y, row in enumerate(grid):
@@ -199,13 +215,17 @@ class Environment:
             rows.append(row_text)
             rows.append(separator)
 
-        if legend:
-            rows.append("")
-            rows.append("Legend:")
-            for symbol, name in sorted(legend.items()):
-                rows.append(f"{symbol} = {name}")
+        rows.append("")
+        rows.append("Legend:")
+
+        for symbol, name in sorted(legend.items()):
+            rows.append(f"{symbol} = {name}")
+
+        rows.append("# = blocked cell")
+        rows.append("D = destination")
 
         return "\n".join(rows)
+    
     
     def render_matplotlib(self):
         """

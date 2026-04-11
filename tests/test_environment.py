@@ -485,3 +485,51 @@ def test_environment_can_remove_blocked_cell():
     env.remove_block(2, 2)
 
     assert env.is_blocked(2, 2) is False        
+    
+def test_render_grid_shows_blocked_cells():
+    env = Environment(width=3, height=2)
+    env.add_block(1, 0)
+
+    grid = env.render_grid()
+
+    assert "0 | . | # | . |" in grid
+    assert "# = blocked cell" in grid
+    
+def test_render_grid_shows_destination():
+    brain = Brain()
+
+    def idle_rule(context):
+        return {"wait": 1.0}
+
+    brain.add_rule("idle", idle_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_destination(2, 1)
+
+    env = Environment(width=3, height=2)
+    env.add_npc(npc)
+
+    grid = env.render_grid()
+
+    assert "1 | . | . | D |" in grid
+    assert "D = destination" in grid
+    
+def test_render_grid_prioritizes_npc_over_destination():
+    brain = Brain()
+
+    def idle_rule(context):
+        return {"wait": 1.0}
+
+    brain.add_rule("idle", idle_rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_position(2, 1)
+    npc.set_destination(2, 1)
+
+    env = Environment(width=3, height=2)
+    env.add_npc(npc)
+
+    grid = env.render_grid()
+
+    assert "1 | . | . | G |" in grid
+    assert "G = Guard" in grid
