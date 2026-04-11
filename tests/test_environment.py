@@ -1,6 +1,7 @@
 from npcore.brain import Brain
 from npcore.npc import NPC
 from npcore.environment import Environment
+from npcore.story_engine import StoryEngine
 
 
 def test_environment_runs():
@@ -178,3 +179,41 @@ def test_npc_receives_structured_events_in_context():
     results = env.step()
 
     assert results[0][1] == "run"
+    
+def test_story_engine_generates_sentences_from_history():
+    story_engine = StoryEngine()
+
+    history = [
+        [("Guard", "run"), ("Villager", "wait")],
+        [("Scout", "defend")],
+    ]
+
+    story = story_engine.generate(history)
+
+    assert len(story) == 3
+    assert "Guard ran during the simulation." in story
+    assert "Villager waited during the simulation." in story
+    assert "Scout defended during the simulation." in story
+    
+def test_story_engine_ignores_message_entries():
+    story_engine = StoryEngine()
+
+    history = [
+        [("Guard", "run"), ("message", "Guard says hello to Villager")],
+    ]
+
+    story = story_engine.generate(history)
+
+    assert len(story) == 1
+    assert story[0] == "Guard ran during the simulation."
+    
+def test_story_engine_handles_unknown_actions():
+    story_engine = StoryEngine()
+
+    history = [
+        [("Guard", "trade")],
+    ]
+
+    story = story_engine.generate(history)
+
+    assert story[0] == "Guard performed action 'trade'."
