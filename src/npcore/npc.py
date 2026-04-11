@@ -354,6 +354,51 @@ class NPC:
 
         return updated
     
+    
+    def share_goal_with_allies(self, others: list["NPC"]) -> int:
+        """
+        Share current goal with allies in the same group.
+        Returns the number of allies updated.
+        """
+        if self.group is None or self.goal is None:
+            return 0
+
+        updated = 0
+
+        for other in others:
+            if other is self:
+                continue
+            if other.group != self.group:
+                continue
+
+            other.goal = self.goal
+            updated += 1
+
+        return updated
+    
+    def share_priorities_with_allies(self, others: list["NPC"]) -> int:
+        """
+        Share current priorities with allies in the same group.
+        Returns the number of allies updated.
+        """
+        if self.group is None or not self.priorities:
+            return 0
+
+        updated = 0
+
+        for other in others:
+            if other is self:
+                continue
+            if other.group != self.group:
+                continue
+
+            other.priorities = dict(self.priorities)
+            updated += 1
+
+        return updated
+    
+    
+    
     def has_memory_event(self, event_type: str) -> bool:
         """
         Return True if the NPC has at least one remembered event of the given type.

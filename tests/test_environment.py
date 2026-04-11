@@ -706,3 +706,53 @@ def test_npc_can_run_after_receiving_shared_danger_event():
     result = ally.act()
 
     assert result == "run"
+    
+def test_group_can_share_goal_and_priorities():
+    brain = Brain()
+
+    def leader_rule(npc, context):
+        nearby = context.get("nearby", [])
+        npc.share_goal_with_allies(nearby)
+        npc.share_priorities_with_allies(nearby)
+        return {"signal": 1.0}
+
+    brain.add_rule("group", leader_rule)
+
+    leader = NPC("Captain", brain)
+    leader.set_state("group")
+    leader.set_group("guards")
+    leader.set_goal("survive")
+    leader.set_priorities({"run": 3.0, "wait": 1.0})
+
+    ally = NPC("Guard", brain)
+    ally.set_group("guards")
+
+    leader.update_context(nearby=[ally])
+
+    result = leader.act()
+
+    assert result == "signal"
+    assert ally.goal == "survive"
+    assert ally.priorities == {"run": 3.0, "wait": 1.0}
+    
+def test_npc_prefers_run_after_receiving_group_priority():
+    brain = Brain()
+
+    def react_rule(context):
+        return {"run": 1.0, "wait": 1.0}
+
+    brain.add_rule("react", react_rule)
+
+    leader = NPC("Captain", brain)
+    ally = NPC("Guard", brain)
+
+    leader.set_group("guards")
+    ally.set_group("guards")
+    ally.set_state("react")
+
+    leader.set_priorities({"run": 3.0, "wait": 1.0})
+    leader.share_priorities_with_allies([ally])
+
+    results = [ally.act() for _ in range(100)]
+
+    assert results.count("run") > results.count("wait")

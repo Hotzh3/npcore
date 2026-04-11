@@ -861,3 +861,65 @@ def test_npc_can_detect_memory_event():
 
     assert npc.has_memory_event("danger") is True
     assert npc.has_memory_event("help") is False
+    
+def test_npc_can_share_goal_with_allies():
+    brain = make_brain()
+
+    leader = NPC("Captain", brain)
+    ally1 = NPC("Guard", brain)
+    ally2 = NPC("Scout", brain)
+
+    leader.set_group("guards")
+    ally1.set_group("guards")
+    ally2.set_group("guards")
+
+    leader.set_goal("survive")
+
+    updated = leader.share_goal_with_allies([ally1, ally2])
+
+    assert updated == 2
+    assert ally1.goal == "survive"
+    assert ally2.goal == "survive"
+    
+def test_npc_can_share_priorities_with_allies():
+    brain = make_brain()
+
+    leader = NPC("Captain", brain)
+    ally = NPC("Guard", brain)
+
+    leader.set_group("guards")
+    ally.set_group("guards")
+
+    leader.set_priorities({"run": 3.0, "wait": 1.0})
+
+    updated = leader.share_priorities_with_allies([ally])
+
+    assert updated == 1
+    assert ally.priorities == {"run": 3.0, "wait": 1.0}
+    
+def test_npc_does_not_share_goal_without_group():
+    brain = make_brain()
+
+    npc = NPC("Wanderer", brain)
+    other = NPC("Guard", brain)
+
+    npc.set_goal("survive")
+
+    updated = npc.share_goal_with_allies([other])
+
+    assert updated == 0
+    assert other.goal is None
+    
+def test_npc_does_not_share_priorities_without_data():
+    brain = make_brain()
+
+    npc = NPC("Wanderer", brain)
+    other = NPC("Guard", brain)
+
+    npc.set_group("guards")
+    other.set_group("guards")
+
+    updated = npc.share_priorities_with_allies([other])
+
+    assert updated == 0
+    assert other.priorities == {}
