@@ -189,19 +189,22 @@ class Environment:
     def render_grid(self, width: int | None = None, height: int | None = None) -> str:
         """
         Render NPC positions, blocked cells, and destinations as an ASCII grid.
+        Priority: NPCs > destination (D) > blocked (#) > empty (.)
+        If multiple NPCs occupy the same cell, show '*' and list them below.
         """
         width = self.width if width is None else width
         height = self.height if height is None else height
 
         grid = [["." for _ in range(width)] for _ in range(height)]
         legend: dict[str, str] = {}
+        overlaps: dict[tuple[int, int], list[str]] = {}
 
         # Obstacles
         for x, y in self.blocked_cells:
             if 0 <= x < width and 0 <= y < height:
                 grid[y][x] = "#"
 
-        # Destinations
+        # Destinations (only if cell still empty)
         for npc in self.npcs:
             if npc.destination is None:
                 continue
@@ -210,16 +213,25 @@ class Environment:
             if 0 <= dx < width and 0 <= dy < height and grid[dy][dx] == ".":
                 grid[dy][dx] = "D"
 
-        # NPC positions override destination/empty cells
+        # Collect NPC positions (to detect overlaps)
         for npc in self.npcs:
             if npc.position is None:
                 continue
 
             x, y = npc.position
-            if 0 <= x < width and 0 <= y < height:
-                symbol = npc.name[0].upper()
+            if not (0 <= x < width and 0 <= y < height):
+                continue
+
+            overlaps.setdefault((x, y), []).append(npc.name)
+
+        # Place NPCs with priority
+        for (x, y), names in overlaps.items():
+            if len(names) == 1:
+                symbol = names[0][0].upper()
                 grid[y][x] = symbol
-                legend[symbol] = npc.name
+                legend[symbol] = names[0]
+            else:
+                grid[y][x] = "*"
 
         header = "    " + "   ".join(str(x) for x in range(width))
         separator = "  +" + "+".join(["---"] * width) + "+"
@@ -236,11 +248,25 @@ class Environment:
         for symbol, name in sorted(legend.items()):
             rows.append(f"{symbol} = {name}")
 
-        rows.append("# = blocked cell")
-        rows.append("D = destination")
+        if any("#" in r for r in grid):
+            rows.append("# = blocked cell")
+
+        if any("D" in r for r in grid):
+            rows.append("D = destination")
+
+        # Show overlapping NPCs
+        overlapping_cells = {cell: names for cell, names in overlaps.items() if len(names) > 1}
+        if overlapping_cells:
+            rows.append("* = multiple NPCs")
+            rows.append("")
+            rows.append("Overlapping NPCs:")
+            for (x, y), names in sorted(overlapping_cells.items()):
+                rows.append(f"({x}, {y}): " + ", ".join(names))
 
         return "\n".join(rows)
-    
+            
+            
+            
     
     def render_matplotlib(self):
         """
@@ -305,7 +331,7 @@ class Environment:
 
     def get_cell_cost(self, x: int, y: int) -> int:
         """
-        Return the movement cost of a cell.
+        Return the movement cost of a cell.def render_grid(self, width: int | None = None, height: int | None = None) -> str:
         """
         return self.cell_costs.get((x, y), 1)
     
