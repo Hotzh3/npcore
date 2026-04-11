@@ -19,6 +19,7 @@ class NPC:
 
         # memoria
         self.memory: dict = {}
+        self.memory_log: list[dict] = []
 
         # objetivos y prioridades
         self.goal: str | None = None
@@ -71,6 +72,44 @@ class NPC:
     def forget(self, key: str) -> None:
         if key in self.memory:
             del self.memory[key]
+            
+    def remember_event(
+        self,
+        event_type: str,
+        source: str | None = None,
+        target: str | None = None,
+        detail: str | None = None,
+    ) -> None:
+        """
+        Store a structured event in memory.
+        """
+        event = {
+            "type": event_type,
+            "source": source,
+            "target": target,
+            "detail": detail,
+        }
+        self.memory_log.append(event)
+
+    def get_memory_log(self) -> list[dict]:
+        """
+        Return the full structured memory log.
+        """
+        return self.memory_log
+
+    def recall_last_event(self) -> dict | None:
+        """
+        Return the most recent structured memory event.
+        """
+        if not self.memory_log:
+            return None
+        return self.memory_log[-1]
+
+    def recall_events_by_type(self, event_type: str) -> list[dict]:
+        """
+        Return structured memory events filtered by type.
+        """
+        return [event for event in self.memory_log if event["type"] == event_type]
 
     def set_goal(self, goal: str) -> None:
         self.goal = goal

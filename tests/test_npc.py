@@ -289,3 +289,54 @@ def test_fearful_personality_favors_run():
 
     assert results.count("run") > results.count("wait")
     
+    
+def test_npc_can_remember_structured_event():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.remember_event(
+        event_type="danger",
+        source="Scout",
+        target="Guard",
+        detail="enemy nearby",
+    )
+
+    memory_log = npc.get_memory_log()
+
+    assert len(memory_log) == 1
+    assert memory_log[0]["type"] == "danger"
+    assert memory_log[0]["source"] == "Scout"
+    
+def test_npc_can_recall_last_event():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.remember_event("danger", source="Scout")
+    npc.remember_event("help", source="Villager")
+
+    last_event = npc.recall_last_event()
+
+    assert last_event is not None
+    assert last_event["type"] == "help"
+    assert last_event["source"] == "Villager"
+    
+def test_npc_can_recall_events_by_type():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.remember_event("danger", source="Scout")
+    npc.remember_event("danger", source="Enemy")
+    npc.remember_event("help", source="Villager")
+
+    danger_events = npc.recall_events_by_type("danger")
+
+    assert len(danger_events) == 2
+    assert all(event["type"] == "danger" for event in danger_events)
+
+def test_recall_last_event_returns_none_when_empty():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+
+    assert npc.recall_last_event() is None
+    
