@@ -241,3 +241,51 @@ def test_relationship_can_influence_decision():
     action = guard.act()
 
     assert action == "help"
+    
+def test_npc_can_set_personality_trait():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+    npc.set_personality_trait("aggression", 0.8)
+
+    assert npc.get_personality_trait("aggression") == 0.8
+
+def test_npc_personality_trait_defaults_to_zero():
+    brain = make_brain()
+
+    npc = NPC("Guard", brain)
+
+    assert npc.get_personality_trait("curiosity") == 0.0
+    
+def test_aggressive_personality_favors_attack():
+    brain = Brain()
+
+    def rule(context):
+        return {"attack": 1.0, "wait": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+    npc.set_personality_trait("aggression", 1.0)
+
+    results = [npc.act() for _ in range(30)]
+
+    assert results.count("attack") > results.count("wait")
+    
+def test_fearful_personality_favors_run():
+    brain = Brain()
+
+    def rule(context):
+        return {"run": 1.0, "wait": 1.0}
+
+    brain.add_rule("idle", rule)
+
+    npc = NPC("Guard", brain)
+    npc.set_state("idle")
+    npc.set_personality_trait("fearfulness", 1.0)
+
+    results = [npc.act() for _ in range(30)]
+
+    assert results.count("run") > results.count("wait")
+    

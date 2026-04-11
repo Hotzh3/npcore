@@ -37,6 +37,14 @@ class NPC:
 
         # relaciones con otros NPCs
         self.relationships: dict[str, float] = {}
+                
+        # personalidad estable
+        self.personality: dict[str, float] = {
+            "aggression": 0.0,
+            "sociability": 0.0,
+            "fearfulness": 0.0,
+            "loyalty": 0.0,
+        }
         
         # emociones
         self.emotions: dict[str, float] = {
@@ -98,6 +106,18 @@ class NPC:
         """
         return self.relationships.get(other_name, 0.0)
 
+
+    def set_personality_trait(self, trait: str, value: float) -> None:
+        """
+        Set a personality trait value.
+        """
+        self.personality[trait] = value
+
+    def get_personality_trait(self, trait: str) -> float:
+        """
+        Get a personality trait value.
+        """
+        return self.personality.get(trait, 0.0)
 
 
     def set_emotion(self, emotion: str, value: float) -> None:

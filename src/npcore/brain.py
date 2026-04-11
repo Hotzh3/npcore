@@ -114,7 +114,34 @@ class Brain:
 
         return adjusted
 
-   
+    def _apply_personality(self, utilities: dict[str, float], npc=None) -> dict[str, float]:
+        """
+        Adjust action utilities according to stable personality traits.
+        """
+        if npc is None:
+            return dict(utilities)
+
+        adjusted = dict(utilities)
+
+        aggression = npc.get_personality_trait("aggression")
+        sociability = npc.get_personality_trait("sociability")
+        fearfulness = npc.get_personality_trait("fearfulness")
+        loyalty = npc.get_personality_trait("loyalty")
+
+        for action, value in adjusted.items():
+            if action in {"attack", "defend"}:
+                adjusted[action] = value * (1 + aggression)
+
+            if action in {"talk", "help", "follow"}:
+                adjusted[action] = adjusted[action] * (1 + sociability)
+
+            if action in {"run", "hide"}:
+                adjusted[action] = adjusted[action] * (1 + fearfulness)
+
+            if action in {"help", "follow", "defend"}:
+                adjusted[action] = adjusted[action] * (1 + loyalty)
+
+        return adjusted
 
     def decide(self, state: str, context: dict, npc=None) -> str:
         """
@@ -125,6 +152,7 @@ class Brain:
         utilities = self._apply_emotions(utilities, npc)
         utilities = self._apply_goal(utilities, npc)
         utilities = self._apply_learning(utilities, npc)
+        utilities = self._apply_personality(utilities, npc)
 
         probabilities = normalize_utilities(utilities)
 
