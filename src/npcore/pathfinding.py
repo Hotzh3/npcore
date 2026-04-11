@@ -36,7 +36,7 @@ def a_star(start, goal, env):
             return path
 
         for neighbor in get_neighbors(current, env):
-            tentative = g_score[current] + 1
+            tentative = g_score[current] + env.get_cell_cost(*neighbor)
 
             if neighbor not in g_score or tentative < g_score[neighbor]:
                 came_from[neighbor] = current

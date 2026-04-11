@@ -533,3 +533,15 @@ def test_render_grid_prioritizes_npc_over_destination():
 
     assert "1 | . | . | G |" in grid
     assert "G = Guard" in grid
+    
+def test_environment_can_store_cell_cost():
+    env = Environment(width=5, height=5)
+
+    env.set_cell_cost(2, 2, 5)
+
+    assert env.get_cell_cost(2, 2) == 5
+    
+def test_environment_cell_cost_defaults_to_one():
+    env = Environment(width=5, height=5)
+
+    assert env.get_cell_cost(0, 0) == 1

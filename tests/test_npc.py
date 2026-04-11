@@ -643,3 +643,19 @@ def test_npc_move_smart_returns_same_position_if_path_blocked():
 
     assert new_pos == (0, 0)
     
+def test_npc_move_smart_avoids_high_cost_cell():
+    from npcore.environment import Environment
+
+    brain = make_brain()
+    npc = NPC("Guard", brain)
+
+    npc.set_position(0, 0)
+    npc.set_destination(2, 0)
+
+    env = Environment(width=3, height=2)
+    env.set_cell_cost(1, 0, 10)
+
+    new_pos = npc.move_smart(env)
+
+    assert new_pos == (0, 1)
+    

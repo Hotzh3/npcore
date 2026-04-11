@@ -21,6 +21,7 @@ class Environment:
         self.height = height
         self.zones: dict[str, list[tuple[int, int]]] = {}
         self.blocked_cells: set[tuple[int, int]] = set()
+        self.cell_costs: dict[tuple[int, int], int] = {}
 
     def add_npc(self, npc: NPC) -> None:
         self.npcs.append(npc)
@@ -280,3 +281,16 @@ class Environment:
         Check whether a cell is blocked.
         """
         return (x, y) in self.blocked_cells
+    
+    def set_cell_cost(self, x: int, y: int, cost: int) -> None:
+        """
+        Assign a movement cost to a cell.
+        """
+        if self.is_within_bounds(x, y):
+            self.cell_costs[(x, y)] = cost
+
+    def get_cell_cost(self, x: int, y: int) -> int:
+        """
+        Return the movement cost of a cell.
+        """
+        return self.cell_costs.get((x, y), 1)
