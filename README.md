@@ -12,8 +12,9 @@ Permite modelar comportamiento autónomo mediante reglas, memoria, emociones, ap
 ## Demo de simulación
 
 Ejemplo de simulación:
-
-![Demo](docs/demo.gif)
+<p align="center">
+  <img src="docs/demo.gif" width="700"/>
+</p>
 
 ---
 
