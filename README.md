@@ -1,5 +1,5 @@
 
-# Npcore
+# npcore
 > Framework de simulación de NPCs con inteligencia emergente, comportamiento social y toma de decisiones adaptativa.
 
 **npcore** es una librería en Python para simular NPCs (Non-Player Characters) inteligentes en entornos dinámicos.  
@@ -8,14 +8,21 @@ Permite modelar comportamiento autónomo mediante reglas, memoria, emociones, ap
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Tests](https://img.shields.io/badge/tests-100%25%20passing-brightgreen)
-
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](LINK_A_TU_NOTEBOOK)
 
 ## Demo de simulación
 
 Ejemplo de simulación:
+
 <p align="center">
   <img src="docs/demo.gif" width="700"/>
+</p>
+
+
+## Visualización del entorno
+
+<p align="center">
+  <img src="docs/grid.png" width="700"/>
 </p>
 
 ---
@@ -195,6 +202,6 @@ npcore está compuesto por los siguientes módulos:
 
 Para ejecutar los tests:
 
-
-bash
+```bash
 pytest
+```
