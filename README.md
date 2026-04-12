@@ -13,7 +13,16 @@ Permite modelar comportamiento autónomo mediante reglas, memoria, emociones, ap
 
 Ejemplo de simulación:
 
-![Demo](docs/demo.gif)
+<p align="center">
+  <img src="docs/demo.gif" width="700"/>
+</p>
+
+
+## Visualización del entorno
+
+<p align="center">
+  <img src="docs/grid.png" width="700"/>
+</p>
 
 ---
 
@@ -192,6 +201,6 @@ npcore está compuesto por los siguientes módulos:
 
 Para ejecutar los tests:
 
-
-bash
+```bash
 pytest
+```
