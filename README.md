@@ -9,6 +9,8 @@ Permite modelar comportamiento autónomo mediante reglas, memoria, emociones, ap
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Tests](https://img.shields.io/badge/tests-100%25%20passing-brightgreen)
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](LINK_A_TU_NOTEBOOK)
+
 ## Demo de simulación
 
 Ejemplo de simulación:
